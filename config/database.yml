@@ -1,0 +1,32 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch('RAILS_MAX_THREADS') { 5 } %>
+  host: <%= ENV.fetch('DATABASE_HOST', 'localhost') %>
+  username: <%= ENV.fetch('DATABASE_USER', 'root') %>
+  port: <%= ENV.fetch("DATABASE_PORT", "5432") %>
+  timezone: UTC
+
+development:
+  <<: *default
+  database: <%= ENV.fetch('DATABASE_NAME', 'broadcast-shift-calendar') %>
+  password: <%= ENV.fetch('DATABASE_PASSWORD', 'postgres') %>
+
+test:
+  <<: *default
+  database: <%= ENV.fetch('DATABASE_NAME', 'broadcast-shift-calendar') %>_test
+  password: <%= ENV.fetch('DATABASE_PASSWORD', 'postgres') %>
+
+production: &production
+  <<: *default
+  database: <%= ENV.fetch('DATABASE_NAME', 'broadcast-shift-calendar') %>
+  username: <%= ENV.fetch('DATABASE_USER', 'bc') %>
+  password: <%= ENV.fetch('DATABASE_PASSWORD') %>
+  port: <%= ENV.fetch("DATABASE_PORT", "5433") %>
+
+staging:
+  <<: *default
+  database: <%= ENV.fetch('STAGE_DATABASE_NAME', 'next-broadcast-shift-calendar') %>
+  username: <%= ENV.fetch('DATABASE_USER', 'bc') %>
+  password: <%= ENV.fetch('DATABASE_PASSWORD') %>
+  port: <%= ENV.fetch("DATABASE_PORT", "5433") %>

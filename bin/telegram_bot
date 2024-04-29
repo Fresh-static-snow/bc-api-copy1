@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+begin
+  require_relative '../config/environment'
+  Telegram::Bot::UpdatesPoller.start(:chat, TelegramWebhookController)
+rescue Exception => e
+  Rollbar.report_exception(e) if defined?(Rollbar) && !e.is_a?(SystemExit)
+  raise
+end

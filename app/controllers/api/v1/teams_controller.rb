@@ -1,0 +1,28 @@
+# frozen_string_literal: true
+
+module Api
+  module V1
+    class TeamsController < BaseCrudController
+
+      private
+
+      def resource_class
+        Team
+      end
+
+      def search_params
+        params.permit(:term, :scope, :with_history)
+      end
+
+      def resource_params
+        params.permit(
+          :id,
+          :game_discipline_id,
+          :keyword,
+          :name
+        )
+      end
+
+    end
+  end
+end

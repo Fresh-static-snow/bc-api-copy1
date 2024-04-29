@@ -1,0 +1,104 @@
+inherit_from: .rubocop_todo.yml
+
+require:
+  - rubocop-rspec
+  - rubocop-rails
+
+AllCops:
+  TargetRubyVersion: 2.7.3
+  Exclude:
+    - 'db/migrate/**/*'
+    - 'db/schema.rb'
+    - 'db/seeds.rb'
+    - 'db/migrate/*'
+    - 'config/**/*'
+    - 'bin/**/*'
+    - 'log'
+    - 'public/**/*'
+    - 'tmp/**/*'
+    - 'vendor/**/*'
+  SuggestExtensions: false
+Layout/FirstHashElementIndentation:
+  Enabled: false
+Layout/FirstArrayElementIndentation:
+  Enabled: false
+Layout/LineLength:
+  Max: 120
+Layout/TrailingEmptyLines:
+  EnforcedStyle: final_newline
+Layout/SpaceInLambdaLiteral:
+  EnforcedStyle: require_space
+Layout/EmptyLinesAroundClassBody:
+  EnforcedStyle: empty_lines_except_namespace
+Layout/EmptyLinesAroundModuleBody:
+  EnforcedStyle: empty_lines_except_namespace
+Lint/RaiseException:
+  Enabled: true
+Lint/MissingSuper:
+  Enabled: false
+Lint/StructNewOverride:
+  Enabled: true
+Metrics/BlockLength:
+  Enabled: false
+Metrics/MethodLength:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+Metrics/AbcSize:
+  Max: 15
+Metrics/ParameterLists:
+  Max: 7
+Naming/MethodParameterName:
+  Enabled: false
+Naming/MemoizedInstanceVariableName:
+  Enabled: false
+Rails:
+  Enabled: true
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/EmptyExampleGroup:
+  Enabled: false
+RSpec/HooksBeforeExamples:
+  Enabled: false
+RSpec/NestedGroups:
+  Max: 4
+RSpec/ScatteredSetup:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Style/RaiseArgs:
+  Enabled: false
+Style/BlockComments:
+  Enabled: false
+Style/GuardClause:
+  Enabled: false
+Style/GlobalVars:
+  Enabled: true
+Style/HashEachMethods:
+  Enabled: true
+Style/HashTransformKeys:
+  Enabled: true
+Style/HashTransformValues:
+  Enabled: true
+Style/StringLiterals:
+  Enabled: false
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: no_comma
+Style/StructInheritance:
+  Enabled: false
+Style/Lambda:
+  Enabled: false
+Style/LambdaCall:
+  Enabled: false
+Style/StabbyLambdaParentheses:
+  Enabled: false
+Style/MultilineBlockChain:
+  Enabled: false
+Style/ExpandPathArguments:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: true
+Metrics/CyclomaticComplexity:
+  Enabled: false

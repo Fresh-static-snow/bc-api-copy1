@@ -1,0 +1,14 @@
+require 'discordrb'
+require_relative '../config/environment'
+
+bot = Discordrb::Bot.new token: ENV['DISCORD_TOKEN']
+
+bot.message(with_text: '/connect_calendar_bot') do |event|
+  if event.channel.id.to_s == ENV['DISCORD_CHANNEL_ID']
+    assign_bot_url = "Для привязки аккаунта перейдіть за [Посиланням](#{ENV['BASE_FRONT_URL']}/discord/#{event.user.id})"
+
+    event.user.pm assign_bot_url
+  end
+end
+
+bot.run

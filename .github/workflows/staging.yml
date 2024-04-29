@@ -1,0 +1,165 @@
+name: Staging
+
+on:
+  push:
+    branches:
+      - staging
+  pull_request:
+    branches:
+      - staging
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: [ '3.0.2' ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+      - name: Run linter
+        run: |
+          bundle exec rubocop
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.BC_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 195.201.193.151 >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null crmtools@195.201.193.151 <<-EOF
+            ssh-add ~/.ssh/id_rsa
+            if [ ! -d "/home/crmtools/next-api" ]; then
+              mkdir /home/crmtools/next-api
+              chown crmtools:crmtools /home/crmtools/next-api
+              git clone git@github-api:masterwebcompany/broadcast-shift-calendar-api.git /home/crmtools/next-api
+            fi
+            cd /home/crmtools/next-api
+            git checkout staging
+            git pull origin staging
+            
+            export SECRET_KEY_BASE="${{ secrets.SECRET_KEY_BASE }}123"
+            export DATABASE_USER="${{ secrets.DATABASE_USER}}"
+            export DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}"
+            export API_TOOLS_ACCESS_TOKEN="${{ secrets.API_TOOLS_ACCESS_TOKEN }}"
+            export ROOT_API_URL="https://next-api-crm.maincast.com"
+            
+            export SMTP_DELIVERY_METHOD="smtp"
+            export SMTP_USER_NAME="${{ secrets.SMTP_USER_NAME }}"
+            export SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}"
+            export SMTP_HOST="${{ secrets.SMTP_HOST }}"
+            export SMTP_PORT="${{ secrets.SMTP_PORT }}"
+            
+            export BASE_FRONT_URL="${{ secrets.BASE_NEXT_FRONT_URL }}"
+            
+            export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"
+            export ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
+            
+            export JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+
+            export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            export GOOGLE_ENCODED_SECRET_FILE="${{ secrets.GOOGLE_ENCODED_SECRET_FILE }}"
+
+            export TELEGRAM_BOT='${{ secrets.TELEGRAM_BOT }}'
+
+            export DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}'
+            export DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}'
+
+            export REDIS_URL=redis://localhost:6379/11
+            export ACTION_CABLE_URL=ws://localhost:3002/cable
+            export LANG=C.UTF-8 
+            export RAILS_ENV=staging
+            export RAILS_MIN_THREADS=1
+            export RAILS_MAX_THREADS=10
+            export WEB_CONCURRENCY=3
+            export SIDEKIQ_CONCURRENCY=5
+            export LC_CTYPE=en_US.UTF-8
+            export LC_ALL=en_US.UTF-8
+            export PORT=3002
+            export PATH="/home/crmtools/.rbenv/bin:/home/crmtools/.rbenv/shims:$PATH"
+
+            echo "
+            SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}'
+            REDIS_URL='redis://localhost:6379/11'
+            ACTION_CABLE_URL='ws://localhost:3002/cable'
+            DATABASE_USER='${{ secrets.DATABASE_USER }}'
+            DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}'
+            API_TOOLS_ACCESS_TOKEN='${{ secrets.API_TOOLS_ACCESS_TOKEN }}'
+            SMTP_DELIVERY_METHOD='smtp'
+            SMTP_USER_NAME='${{ secrets.SMTP_USER_NAME }}'
+            SMTP_PASSWORD='${{ secrets.SMTP_PASSWORD }}'
+            SMTP_HOST='${{ secrets.SMTP_HOST }}'
+            SMTP_PORT='${{ secrets.SMTP_PORT }}'
+            BASE_FRONT_URL='${{ secrets.BASE_NEXT_FRONT_URL }}'
+            ADMIN_EMAIL='${{ secrets.ADMIN_EMAIL }}'
+            ADMIN_PASSWORD='${{ secrets.ADMIN_PASSWORD }}'
+            JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
+            ROOT_API_URL='https://next-api-crm.maincast.com'
+            GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID }}'
+            GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET }}'
+            GOOGLE_ENCODED_SECRET_FILE='${{ secrets.GOOGLE_ENCODED_SECRET_FILE }}'
+            TELEGRAM_TOKEN='${{ secrets.TELEGRAM_TOKEN }}'
+            DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}'
+            DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}'
+            LANG=C.UTF-8 
+            RAILS_ENV=staging
+            RAILS_MIN_THREADS=1
+            RAILS_MAX_THREADS=10
+            WEB_CONCURRENCY=3
+            SIDEKIQ_CONCURRENCY=5
+            LC_CTYPE=en_US.UTF-8
+            LC_ALL=en_US.UTF-8
+            PORT=3002
+            PATH='/home/crmtools/.rbenv/bin:/home/crmtools/.rbenv/shims:\$PATH\'
+            " > /home/crmtools/next-api/.env
+            
+            rbenv global 3.0.2
+
+            rbenv -v
+            ruby -v
+            bundle -v
+
+            bundle config --global frozen false
+            bundle config set without 'development test'
+            bundle config set --local deployment 'true'
+            bundle install --without development test -j4 --retry 3
+
+            bundle exec rails db:migrate
+
+            # Restart or start Sidekiq
+            sudo systemctl restart next_broadcast_calendar_sidekiq.service || sudo systemctl start next_broadcast_calendar_sidekiq.service
+
+            # Restart or start the next_broadcast_calendar_puma.service
+            sudo systemctl restart next_broadcast_calendar_puma.service || sudo systemctl start next_broadcast_calendar_puma.service
+            
+            # Run tests
+            export PATH="$PATH:/home/crmtools/.pyenv/bin"
+
+            eval "$(pyenv init -)"
+
+            pyenv local 3.8.0
+            
+            # cd /home/crmtools/autotests/Tests
+            # sleep 10
+            # env=STAGE /home/crmtools/.pyenv/versions/3.8.0/bin/pytest test_endpoints_api.py --alluredir=/home/crmtools/autotests/allure_results
+
+            # Restart Allure serve
+            # sudo systemctl restart broadcast_calendar_allure.service || sudo systemctl start broadcast_calendar_allure.service
+
+            # Start Telegram poller
+            cd /home/crmtools/next-api/
+            /home/crmtools/.rbenv/shims/bundle exec ruby ./bin/telegram_bot_ctl restart
+
+            # Start Discord Bot
+            cd /home/crmtools/next-api/
+            RAILS_ENV=staging /home/crmtools/.rbenv/shims/bundle exec ruby ./bin/discord_bot_ctl restart
+
+          EOF

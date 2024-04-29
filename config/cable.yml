@@ -1,0 +1,19 @@
+default: &default
+  adapter: redis
+  url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379" } %>
+  mount_path: /cable
+
+development:
+  <<: *default
+  channel_prefix: broadcast-shift-calendar-api
+
+staging:
+  <<: *default
+  channel_prefix: broadcast-shift-calendar-api-staging
+
+production:
+  <<: *default
+  channel_prefix: broadcast-shift-calendar-api-production
+
+test:
+  adapter: test

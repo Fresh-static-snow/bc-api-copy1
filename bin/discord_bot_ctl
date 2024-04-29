@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require 'daemons'
+
+Daemons.run File.join(__dir__, 'discord_bot'),
+            monitor: true,
+            dir: '../tmp/pids'

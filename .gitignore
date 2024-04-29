@@ -1,0 +1,29 @@
+# Ignore Ruby files.
+.idea/*
+
+# Ignore MacOS files.
+.DS_Store
+
+# Ignore local environment variables.
+.env
+/config/client_secret.json
+
+# Ignore bundler config.
+/.bundle
+
+# Ignore all logfiles and tempfiles.
+.byebug_history
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Ignore uploaded files in development.
+/storage/*
+!/storage/.keep
+
+# Ignore master key for decrypting credentials and more.
+/coverage
+/vendor
+
+/data

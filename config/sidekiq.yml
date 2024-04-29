@@ -1,0 +1,21 @@
+---
+:verbose: false
+:concurrency: <%= ENV.fetch('SIDEKIQ_CONCURRENCY') { 5 } %>
+:max_retries: 1
+:timeout: 10
+
+:log_level: error
+
+:queues:
+  - default
+  - active_storage_analysis
+  - active_storage_purge
+
+:scheduler:
+  :schedule:
+    google_sheets_month_job:
+      cron: '0 2 1 * *'
+      class: GoogleSheetsMonthJob
+    google_sheets_day_job:
+      cron: '0 4 * * *'
+      class: GoogleSheetsDayJob

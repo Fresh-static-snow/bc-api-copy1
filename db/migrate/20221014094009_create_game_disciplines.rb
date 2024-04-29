@@ -1,0 +1,12 @@
+class CreateGameDisciplines < ActiveRecord::Migration[6.0]
+  def change
+    create_table :game_disciplines do |t|
+      t.string :title, null: false
+      t.string :keyword, null: false
+
+      # soft delete
+      t.datetime :deleted_at
+      t.index :deleted_at
+    end
+  end
+end
