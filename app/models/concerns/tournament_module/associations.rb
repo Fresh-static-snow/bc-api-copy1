@@ -30,7 +30,7 @@ module TournamentModule
       has_many :tournament_media_representatives, class_name: 'TournamentContext::MediaRepresentatives',
                                                   dependent: :destroy
       has_many :media_representatives, -> { User.with_history.distinct }, through: :tournament_media_representatives,
-                                                                 source: :user
+                                                                          source: :user
       has_many :media_representatives_without_history, through: :tournament_media_representatives, source: :user
 
       has_many :tournament_sponsors, class_name: 'TournamentContext::Sponsors', dependent: :destroy
