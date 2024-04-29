@@ -28,20 +28,20 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.BC_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 195.201.193.151 >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Deploy to server
         run: |
-          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null crmtools@195.201.193.151 <<-EOF
+          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
             ssh-add ~/.ssh/id_rsa
-            if [ ! -d "/home/crmtools/next-api" ]; then
-              mkdir /home/crmtools/next-api
-              chown crmtools:crmtools /home/crmtools/next-api
-              git clone git@github-api:masterwebcompany/broadcast-shift-calendar-api.git /home/crmtools/next-api
+            if [ ! -d "/home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}" ]; then
+              mkdir /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
+              chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
+              git clone ${{ secrets.SSH_GITHUB_REPOSITORY }} /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
             fi
-            cd /home/crmtools/next-api
+            cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
             git checkout staging
             git pull origin staging
             
@@ -49,7 +49,7 @@ jobs:
             export DATABASE_USER="${{ secrets.DATABASE_USER}}"
             export DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}"
             export API_TOOLS_ACCESS_TOKEN="${{ secrets.API_TOOLS_ACCESS_TOKEN }}"
-            export ROOT_API_URL="https://next-api-crm.maincast.com"
+            export ROOT_API_URL="${{ secrets.ROOT_API_URL }}"
             
             export SMTP_DELIVERY_METHOD="smtp"
             export SMTP_USER_NAME="${{ secrets.SMTP_USER_NAME }}"
@@ -84,7 +84,7 @@ jobs:
             export LC_CTYPE=en_US.UTF-8
             export LC_ALL=en_US.UTF-8
             export PORT=3002
-            export PATH="/home/crmtools/.rbenv/bin:/home/crmtools/.rbenv/shims:$PATH"
+            export PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH"
 
             echo "
             SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}'
@@ -118,8 +118,8 @@ jobs:
             LC_CTYPE=en_US.UTF-8
             LC_ALL=en_US.UTF-8
             PORT=3002
-            PATH='/home/crmtools/.rbenv/bin:/home/crmtools/.rbenv/shims:\$PATH\'
-            " > /home/crmtools/next-api/.env
+            PATH='/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:\$PATH\'
+            " > /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/.env
             
             rbenv global 3.0.2
 
@@ -141,25 +141,25 @@ jobs:
             sudo systemctl restart next_broadcast_calendar_puma.service || sudo systemctl start next_broadcast_calendar_puma.service
             
             # Run tests
-            export PATH="$PATH:/home/crmtools/.pyenv/bin"
+            export PATH="$PATH:/home/${{ secrets.SSH_USER }}/.pyenv/bin"
 
             eval "$(pyenv init -)"
 
             pyenv local 3.8.0
             
-            # cd /home/crmtools/autotests/Tests
+            # cd /home/${{ secrets.SSH_USER }}/autotests/Tests
             # sleep 10
-            # env=STAGE /home/crmtools/.pyenv/versions/3.8.0/bin/pytest test_endpoints_api.py --alluredir=/home/crmtools/autotests/allure_results
+            # env=STAGE /home/${{ secrets.SSH_USER }}/.pyenv/versions/3.8.0/bin/pytest test_endpoints_api.py --alluredir=/home/${{ secrets.SSH_USER }}/autotests/allure_results
 
             # Restart Allure serve
             # sudo systemctl restart broadcast_calendar_allure.service || sudo systemctl start broadcast_calendar_allure.service
 
             # Start Telegram poller
-            cd /home/crmtools/next-api/
-            /home/crmtools/.rbenv/shims/bundle exec ruby ./bin/telegram_bot_ctl restart
+            cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/
+            /home/${{ secrets.SSH_USER }}/.rbenv/shims/bundle exec ruby ./bin/telegram_bot_ctl restart
 
             # Start Discord Bot
-            cd /home/crmtools/next-api/
-            RAILS_ENV=staging /home/crmtools/.rbenv/shims/bundle exec ruby ./bin/discord_bot_ctl restart
+            cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/
+            RAILS_ENV=staging /home/${{ secrets.SSH_USER }}/.rbenv/shims/bundle exec ruby ./bin/discord_bot_ctl restart
 
           EOF
