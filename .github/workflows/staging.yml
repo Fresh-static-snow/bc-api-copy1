@@ -135,6 +135,7 @@ jobs:
             bundle install --without development test -j4 --retry 3
 
             bundle exec rails db:migrate
+            bundle exec rails db:seed
 
             # Restart or start Sidekiq
             sudo systemctl restart next_broadcast_calendar_sidekiq.service || sudo systemctl start next_broadcast_calendar_sidekiq.service
