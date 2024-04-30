@@ -45,6 +45,7 @@ jobs:
             git checkout staging
             git pull origin staging
             
+            export STAGE_DATABASE_NAME="${{ secrets.STAGE_DATABASE_NAME }}"
             export SECRET_KEY_BASE="${{ secrets.SECRET_KEY_BASE }}123"
             export DATABASE_USER="${{ secrets.DATABASE_USER}}"
             export DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}"
@@ -87,6 +88,7 @@ jobs:
             export PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH"
 
             echo "
+            STAGE_DATABASE_NAME='${{ secrets.STAGE_DATABASE_NAME }}''
             SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}'
             REDIS_URL='redis://localhost:6379/11'
             ACTION_CABLE_URL='ws://localhost:3002/cable'
