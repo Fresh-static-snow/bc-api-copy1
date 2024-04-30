@@ -45,6 +45,7 @@ jobs:
             git checkout staging
             git pull origin staging
             
+            export DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
             export STAGE_DATABASE_NAME="${{ secrets.STAGE_DATABASE_NAME }}"
             export SECRET_KEY_BASE="${{ secrets.SECRET_KEY_BASE }}123"
             export DATABASE_USER="${{ secrets.DATABASE_USER}}"
@@ -89,6 +90,7 @@ jobs:
 
             echo "
             STAGE_DATABASE_NAME='${{ secrets.STAGE_DATABASE_NAME }}'
+            DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
             SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}'
             REDIS_URL='redis://localhost:6379/11'
             ACTION_CABLE_URL='ws://localhost:3002/cable'
@@ -135,7 +137,6 @@ jobs:
             bundle install --without development test -j4 --retry 3
 
             bundle exec rails db:migrate
-            bundle exec rails db:seed
 
             # Restart or start Sidekiq
             sudo systemctl restart next_broadcast_calendar_sidekiq.service || sudo systemctl start next_broadcast_calendar_sidekiq.service
