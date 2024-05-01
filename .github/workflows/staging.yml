@@ -87,7 +87,7 @@ jobs:
             export SIDEKIQ_CONCURRENCY=5
             export LC_CTYPE=en_US.UTF-8
             export LC_ALL=en_US.UTF-8
-            export PORT=${{ secrets.SERVER_PORT }}
+            export PORT=${{ secrets.PORT }}
             export PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH"
 
             echo "
@@ -125,7 +125,7 @@ jobs:
             SIDEKIQ_CONCURRENCY=5
             LC_CTYPE=en_US.UTF-8
             LC_ALL=en_US.UTF-8
-            PORT=${{ secrets.SERVER_PORT }}
+            PORT=${{ secrets.PORT }}
             PATH='/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:\$PATH\'
             " > /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/.env
             
