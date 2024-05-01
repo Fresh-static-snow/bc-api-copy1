@@ -78,7 +78,7 @@ jobs:
             export DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}'
 
             export REDIS_URL='redis://redis-db/1'
-            export ACTION_CABLE_URL=ws://localhost:3002/cable
+            export ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable'
             export LANG=C.UTF-8 
             export RAILS_ENV=production
             export RAILS_MIN_THREADS=1
@@ -97,7 +97,7 @@ jobs:
             DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
             SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}'
             REDIS_URL='redis://redis-db/1'
-            ACTION_CABLE_URL='ws://localhost:3002/cable'
+            ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable'
             DATABASE_USER='${{ secrets.DATABASE_USER }}'
             DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}'
             API_TOOLS_ACCESS_TOKEN='${{ secrets.API_TOOLS_ACCESS_TOKEN }}'
