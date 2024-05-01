@@ -140,12 +140,12 @@ jobs:
 
             bundle exec rails db:migrate
 
-            # Restart or start Sidekiq
-            sudo systemctl restart next_broadcast_calendar_sidekiq.service || sudo systemctl start next_broadcast_calendar_sidekiq.service
+            # Restart or start the demo_broadcast_calendar_puma.service
+            sudo systemctl restart demo_broadcast_calendar_puma.service || sudo systemctl start demo_broadcast_calendar_puma.service
 
-            # Restart or start the next_broadcast_calendar_puma.service
-            sudo systemctl restart next_broadcast_calendar_puma.service || sudo systemctl start next_broadcast_calendar_puma.service
-            
+            # Start Sidekiq
+            sudo systemctl restart demo_broadcast_calendar_sidekiq.service || sudo systemctl start demo_broadcast_calendar_sidekiq.service
+
             # Run tests
             export PATH="$PATH:/home/${{ secrets.SSH_USER }}/.pyenv/bin"
 
