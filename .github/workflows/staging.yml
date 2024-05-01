@@ -45,6 +45,7 @@ jobs:
             git checkout staging
             git pull origin staging
             
+            export DOCKER_REDIS_PORT=63793
             export DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
             export DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
             export STAGE_DATABASE_NAME="${{ secrets.STAGE_DATABASE_NAME }}"
@@ -76,10 +77,10 @@ jobs:
             export DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}'
             export DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}'
 
-            export REDIS_URL=redis://localhost:6379/11
+            export REDIS_URL='redis://redis-db/1'
             export ACTION_CABLE_URL=ws://localhost:3002/cable
             export LANG=C.UTF-8 
-            export RAILS_ENV=staging
+            export RAILS_ENV=production
             export RAILS_MIN_THREADS=1
             export RAILS_MAX_THREADS=10
             export WEB_CONCURRENCY=3
@@ -90,11 +91,12 @@ jobs:
             export PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH"
 
             echo "
+            DOCKER_REDIS_PORT=63793
             DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
             STAGE_DATABASE_NAME='${{ secrets.STAGE_DATABASE_NAME }}'
             DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
             SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}'
-            REDIS_URL='redis://localhost:6379/11'
+            REDIS_URL='redis://redis-db/1'
             ACTION_CABLE_URL='ws://localhost:3002/cable'
             DATABASE_USER='${{ secrets.DATABASE_USER }}'
             DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}'
