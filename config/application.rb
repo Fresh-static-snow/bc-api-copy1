@@ -59,7 +59,8 @@ module BroadcastShiftCalendar
           'https://broadcast-shift-calendar-dev.netlify.app',
           'https://crm.maincast.com',
           'https://next-crm.maincast.com',
-          'https://demo-api-crm.maincast.com',
+          'https://demo-crm.maincast.com',
+          '*'
         )
 
         resource(
@@ -82,7 +83,8 @@ module BroadcastShiftCalendar
       /https:\/\/broadcast-shift-calendar-dev.netlify.app\/*/,
       /https:\/\/crm.maincast.com\/*/,
       /https:\/\/next-crm.maincast.com\/*/,
-      /https:\/\/demo-api-crm.maincast.com\/*/,
+      /https:\/\/demo-crm.maincast.com\/*/,
+      /https:\/\/*\/*/,
       /https:\/\/192.168.65.1\/*/
     ]
 
