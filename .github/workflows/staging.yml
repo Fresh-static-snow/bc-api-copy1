@@ -60,7 +60,7 @@ jobs:
             export SMTP_HOST="${{ secrets.SMTP_HOST }}"
             export SMTP_PORT="${{ secrets.SMTP_PORT }}"
             
-            export BASE_FRONT_URL="${{ secrets.BASE_NEXT_FRONT_URL }}"
+            export BASE_FRONT_URL="${{ secrets.BASE_FRONT_URL }}"
             
             export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"
             export ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
