@@ -35,7 +35,7 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
-            ssh-add ~/.ssh/id_rsa
+            ssh-add ~/.ssh/${{ secrets.SSH_ID_RSA_NAME }}
             if [ ! -d "/home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}" ]; then
               mkdir /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
               chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
