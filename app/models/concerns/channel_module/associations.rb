@@ -6,7 +6,7 @@ module ChannelModule
     extend ActiveSupport::Concern
 
     included do
-      has_many :match_cast_channels, dependent: :destroy
+      has_many :match_cast_channels, dependent: :destroy, class_name: 'MatchCastsChannel'
       has_many :match_casts, through: :match_cast_channels, dependent: :destroy
     end
 

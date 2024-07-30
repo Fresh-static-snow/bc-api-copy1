@@ -7,6 +7,7 @@ class ApplicationController < ActionController::API
   include ApplicationHelper
 
   before_action :set_default_user_params
+  before_action :set_sentry_context
 
   private
 
@@ -15,6 +16,10 @@ class ApplicationController < ActionController::API
 
     I18n.locale = params[:locale]
   rescue I18n::InvalidLocale
+    Sentry.set_extras(stats: params[:locale]) do
+      Sentry.capture_exception(e)
+    end
+
     I18n.locale = I18n.default_locale
   end
 
@@ -24,6 +29,21 @@ class ApplicationController < ActionController::API
     else
       render_json_response(true, result, status)
     end
+  end
+
+  def set_sentry_context
+    if user_signed_in?
+      Sentry.set_user(
+        nickname: current_user.display_name,
+        id: current_user.id
+      )
+    end
+
+    # TODO: need to add company tanency param
+    Sentry.set_extras(
+      params: params.to_unsafe_h,
+      url: request.url
+    )
   end
 
 end

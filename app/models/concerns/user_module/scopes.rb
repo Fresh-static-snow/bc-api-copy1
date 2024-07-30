@@ -11,8 +11,8 @@ module UserModule
       scope :media_representatives, -> {
         joins(:user_disciplines).where(user_disciplines: { title: 'Media Representative' })
       }
-      scope :commentators, -> { joins(:user_disciplines).where(user_disciplines: { title: 'Commentator' }) }
-      scope :analytics, -> { joins(:user_disciplines).where(user_disciplines: { title: 'Analytic' }) }
+      scope :commentators, -> { joins(:user_disciplines).where(user_disciplines: { title: 'Caster' }) }
+      scope :analytics, -> { joins(:user_disciplines).where(user_disciplines: { title: 'Analyst' }) }
       scope :staff_members, -> { joins(:user_disciplines).where(user_disciplines: { title: 'Staff' }) }
       scope :managers, -> { joins(:user_disciplines).where(user_disciplines: { title: 'Manager' }) }
 

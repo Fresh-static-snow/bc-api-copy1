@@ -2,14 +2,6 @@
 
 module CastContext
   class Channel
-    class Delete < BaseDeleteService
-
-      def call
-        HistoryService.hide_history(resource)
-
-        super
-      end
-
-    end
+    class Delete < BaseDeleteService; end
   end
 end

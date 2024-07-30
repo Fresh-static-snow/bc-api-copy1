@@ -21,7 +21,8 @@ module GoogleApi
         begin
           res = calendar.insert_event(calendar_id, event)
           res&.id
-        rescue Google::Apis::ClientError
+        rescue Google::Apis::ClientError => e
+          Sentry.capture_exception(e)
           nil
         end
       end

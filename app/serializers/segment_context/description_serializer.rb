@@ -1,0 +1,22 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: descriptions
+#
+#  id          :bigint           not null, primary key
+#  description :text
+#  title       :string
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  segment_id  :bigint
+#
+module SegmentContext
+  class DescriptionSerializer < Blueprinter::Base
+
+    identifier :id
+
+    fields :title, :description
+
+  end
+end

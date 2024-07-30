@@ -35,6 +35,8 @@ module Api
           game_discipline: [],
           studio: [],
           analytic_studio: [],
+          setup: [],
+          stream: [],
           channel: [],
           managers: [],
           main_participants: [],

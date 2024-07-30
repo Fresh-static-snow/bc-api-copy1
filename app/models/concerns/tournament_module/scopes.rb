@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module TournamentModule
-  module Scopes
+  module Scopes # rubocop:disable Metrics/ModuleLength
 
     extend ActiveSupport::Concern
 
@@ -11,11 +11,11 @@ module TournamentModule
       }
 
       scope :filter_by_period_from, -> (period_from) {
-        where('tournaments.end_at >= ?', period_from.in_time_zone)
+        where('tournaments.end_at >= ?', period_from.change(offset: 'EEST'))
       }
 
       scope :filter_by_period_to, -> (period_to) {
-        where('tournaments.start_at <= ?', period_to.in_time_zone)
+        where('tournaments.start_at <= ?', period_to.change(offset: 'EEST'))
       }
 
       scope :filter_by_game_discipline, -> (game_discipline_id) {
@@ -27,8 +27,14 @@ module TournamentModule
       scope :filter_by_analytic_studio, -> (analytic_studio_id) {
         where('match_casts.cast_analytic_studio_id': analytic_studio_id)
       }
+      scope :filter_by_setup, -> (setup_id) {
+        where('match_casts.cast_setup_id': setup_id)
+      }
+      scope :filter_by_stream, -> (stream_id) {
+        where('match_casts.cast_stream_id': stream_id)
+      }
       scope :filter_by_channel, -> (channel_id) {
-        where('match_casts.cast_channel_id': channel_id)
+        where('match_casts_channels.channel_id': channel_id)
       }
       scope :filter_by_managers, -> (managers_id) {
         where('tournaments.owner_id': managers_id)
@@ -47,6 +53,12 @@ module TournamentModule
       }
       scope :filter_by_commentators, -> (commentator_id) {
         where('match_commentators.user_id': commentator_id)
+      }
+      scope :filter_by_host_analytic, -> (analytics_id) {
+        where('match_host_analytics.user_id': analytics_id)
+      }
+      scope :filter_by_backup_commentators, -> (commentator_id) {
+        where('match_backup_commentators.user_id': commentator_id)
       }
       scope :filter_by_year, -> (year) { where('extract(year from end_at) = ?', year) }
       scope :ongoing, -> { where('end_at IS NULL OR end_at >= ? OR end_at = start_at', Time.current) }
@@ -69,8 +81,18 @@ module TournamentModule
           conditions_params << params[:analytic_studio]
         end
 
+        if params[:setup].present?
+          conditions << "match_casts.cast_setup_id IN (?)"
+          conditions_params << params[:setup]
+        end
+
+        if params[:stream].present?
+          conditions << "match_casts.cast_stream_id IN (?)"
+          conditions_params << params[:stream]
+        end
+
         if params[:channel].present?
-          conditions << "match_casts.cast_channel_id IN (?)"
+          conditions << "match_casts_channels.channel_id IN (?)"
           conditions_params << params[:channel]
         end
 
@@ -102,6 +124,16 @@ module TournamentModule
         if params[:commentators].present?
           conditions << "match_commentators.user_id IN (?)"
           conditions_params << params[:commentators]
+        end
+
+        if params[:backup_commentators].present?
+          conditions << "match_backup_commentators.user_id IN (?)"
+          conditions_params << params[:backup_commentators]
+        end
+
+        if params[:host_analytic].present?
+          conditions << "match_host_analytics.user_id IN (?)"
+          conditions_params << params[:host_analytic]
         end
 
         query = conditions.join(" OR ")

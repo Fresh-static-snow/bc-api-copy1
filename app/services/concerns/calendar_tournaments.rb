@@ -13,12 +13,15 @@ module CalendarTournaments
           matches: [
             :team_one, :team_two,
             { match_casts: [
-              # { commentators: { avatar_attachment: :blob } },
-              # { analytics: { avatar_attachment: :blob } },
-              # { staff_members: { avatar_attachment: :blob } },
+              { match_analytics: { user: { avatar_attachment: :blob } } },
+              { match_commentators: { user: { avatar_attachment: :blob } } },
+              { match_staff_members: { user: { avatar_attachment: :blob } } },
+              { match_backup_commentators: { user: { avatar_attachment: :blob } } },
+              { match_host_analytic: { user: { avatar_attachment: :blob } } },
               :analytic_studio,
               :language,
               :studio,
+              :setup,
               :cast_channels
             ] }
           ]

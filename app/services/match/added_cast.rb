@@ -39,8 +39,8 @@ class Match
           match_casts.match_analytics,
           match_casts.match_commentators,
           match_casts.match_staff_members,
-          [match_casts.reload.match_host_analytic],
-          [match_casts.reload.match_backup_commentator]
+          match_casts.reload.match_backup_commentators,
+          [match_casts.reload.match_host_analytic]
         ]
       end
     end

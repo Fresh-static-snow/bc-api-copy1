@@ -18,7 +18,9 @@ module GoogleApi
       def call # rubocop:disable Metrics/AbcSize
         begin
           event = calendar.get_event(calendar_id, event_id)
-        rescue Google::Apis::ClientError
+        rescue Google::Apis::ClientError => e
+          Sentry.capture_exception(e)
+
           event = false
           event
         end
@@ -38,7 +40,8 @@ module GoogleApi
           begin
             res = calendar.update_event(calendar_id, event_id, event)
             res&.id
-          rescue Google::Apis::ClientError
+          rescue Google::Apis::ClientError => e
+            Sentry.capture_exception(e)
             nil
           end
         end

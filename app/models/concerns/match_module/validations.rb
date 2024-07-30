@@ -45,7 +45,9 @@ module MatchModule
       end
 
       def validate_tournament_exist
-        errors.add(:tournament_id, 'Tournament with such id does not exist') unless Tournament.exists?(id: tournament_id)
+        unless Tournament.exists?(id: tournament_id)
+          errors.add(:tournament_id, 'Tournament with such id does not exist')
+        end
       end
     end
 

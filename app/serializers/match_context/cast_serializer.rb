@@ -26,7 +26,7 @@ module MatchContext
       association :commentators, blueprint: UserSerializer, view: :calendar
       association :analytics, blueprint: UserSerializer, view: :calendar
       association :staff_members, blueprint: UserSerializer, view: :calendar
-      association :backup_commentator, blueprint: UserSerializer, view: :calendar
+      association :backup_commentators, blueprint: UserSerializer, view: :calendar
       association :host_analytic, blueprint: UserSerializer, view: :calendar
     end
 
@@ -37,6 +37,8 @@ module MatchContext
     view :edit do
       association :analytic_studio, blueprint: CastContext::AnalyticStudioSerializer, view: :list
       association :studio, blueprint: CastContext::StudioSerializer, view: :list
+      association :setup, blueprint: CastContext::SetupSerializer, view: :list
+      association :stream, blueprint: CastContext::StreamSerializer, view: :list
       association :language, blueprint: CastContext::LanguageSerializer, view: :list
       association :channels, blueprint: CastContext::ChannelSerializer, view: :list
 

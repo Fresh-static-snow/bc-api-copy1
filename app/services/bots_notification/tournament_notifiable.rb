@@ -5,27 +5,27 @@ module BotsNotification
 
     attr_reader :tournament, :match_casts, :user_discipline
 
-    def initialize(resource, user, action_name)
-      super(resource, user, action_name)
+    def initialize(resource, action_name)
+      super(resource, action_name)
 
       @user_discipline = user_discipline
     end
 
-    private
-
     def message_text # rubocop:disable Metrics/AbcSize
-      message = "#{action_icon} Турнір: #{resource.title} \n"
+      message = "#{action_icon} Турнір: #{resource.title.gsub(/_/, '\_')} \n"
       message += "💥 Дисципліна: #{resource.game_discipline.title} \n"
       message += date_time_message
       message += link_message
       message += "Спонсори: #{resource.sponsors.pluck(:name).join(', ')} \n"
-      message += "Main Participants: #{resource.main_participants.map(&:display_name).join(', ')} \n"
-      message += "Media Representatives: #{resource.media_representatives.map(&:display_name).join(', ')} \n"
+      message += "Відповідальний менеджер: #{resource.main_participants.map(&:display_name).join(', ')} \n"
+      message += "Відповідальний за медіа: #{resource.media_representatives.map(&:display_name).join(', ')} \n"
       message
     end
 
+    private
+
     def date_time_message
-      "⏰ Дата і час: #{resource.start_at.strftime('%Y-%m-%d | %H:%M')}#{resource.end_at&.strftime(' - %H:%M')} \n"
+      "⏰ Дата і час: #{resource.start_at.strftime('%Y-%m-%d')} #{resource.end_at&.strftime('| %Y-%m-%d')} \n"
     end
 
     def link_message

@@ -2,14 +2,6 @@
 
 module CastContext
   class Channel
-    class SoftDestroy < BaseSoftDestroyService
-
-      def call
-        HistoryService.hide_history(resource, soft_destroy: true)
-
-        super
-      end
-
-    end
+    class SoftDestroy < BaseSoftDestroyService; end
   end
 end

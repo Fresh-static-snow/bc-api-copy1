@@ -10,10 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_04_14_173936) do
+ActiveRecord::Schema.define(version: 2024_07_17_130049) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "account_settings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.boolean "current_user_filter_enabled", default: true
+    t.integer "default_calendar_scope", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_account_settings_on_user_id"
+  end
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -71,6 +80,22 @@ ActiveRecord::Schema.define(version: 2024_04_14_173936) do
     t.index ["deleted_at"], name: "index_cast_languages_on_deleted_at"
   end
 
+  create_table "cast_setups", force: :cascade do |t|
+    t.string "name"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "index_cast_setups_on_deleted_at"
+  end
+
+  create_table "cast_streams", force: :cascade do |t|
+    t.string "name"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "index_cast_streams_on_deleted_at"
+  end
+
   create_table "cast_studios", force: :cascade do |t|
     t.string "name"
     t.string "keyword"
@@ -120,6 +145,14 @@ ActiveRecord::Schema.define(version: 2024_04_14_173936) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "descriptions", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.bigint "segment_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "entity_comments", force: :cascade do |t|
     t.string "entity_type"
     t.text "message"
@@ -136,6 +169,15 @@ ActiveRecord::Schema.define(version: 2024_04_14_173936) do
     t.integer "order", default: 0
     t.string "keyword"
     t.index ["deleted_at"], name: "index_game_disciplines_on_deleted_at"
+  end
+
+  create_table "guests", force: :cascade do |t|
+    t.string "name"
+    t.string "username"
+    t.string "social"
+    t.bigint "segment_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "invitations", force: :cascade do |t|
@@ -185,6 +227,8 @@ ActiveRecord::Schema.define(version: 2024_04_14_173936) do
     t.integer "cast_analytic_studio_id"
     t.integer "host_analytic_id"
     t.integer "backup_commentator_id"
+    t.integer "cast_setup_id"
+    t.integer "cast_stream_id"
     t.index ["deleted_at"], name: "index_match_casts_on_deleted_at"
     t.index ["match_id"], name: "index_match_casts_on_match_id"
   end
@@ -240,7 +284,17 @@ ActiveRecord::Schema.define(version: 2024_04_14_173936) do
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
     t.jsonb "google_event_ids", default: {}
+    t.string "type"
+    t.string "title"
     t.index ["deleted_at"], name: "index_matches_on_deleted_at"
+  end
+
+  create_table "media", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.bigint "segment_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "regions", force: :cascade do |t|
@@ -442,7 +496,7 @@ ActiveRecord::Schema.define(version: 2024_04_14_173936) do
     t.boolean "google_calendar_status", default: false, null: false
     t.string "display_name"
     t.string "time_zone", default: "Europe/Kiev"
-    t.bigint "telegram_chat_id"
+    t.integer "telegram_chat_id"
     t.bigint "discord_user_id"
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -452,6 +506,7 @@ ActiveRecord::Schema.define(version: 2024_04_14_173936) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "account_settings", "users"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "corporate_main_participants", "corporates"
   add_foreign_key "corporate_main_participants", "users"

@@ -7,7 +7,8 @@ module ManagementContext
       AVAILABLE_ITEMS = { 'Discipline': GameDiscipline, 'Tournament': Tournament, 'Match': Match,
                           'Studio': CastContext::Studio, 'Studio analytics': CastContext::AnalyticStudio,
                           'Channel': CastContext::Channel, 'Language': CastContext::Language, 'Team': Team,
-                          'Sponsor': Sponsor, 'Seasonal branding': Branding }.freeze
+                          'Sponsor': Sponsor, 'Seasonal branding': Branding, 'Setup': CastContext::Setup,
+                          'Stream': CastContext::Stream, 'Segment': Segment }.freeze
 
       def call
         {

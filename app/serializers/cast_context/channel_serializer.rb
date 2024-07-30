@@ -19,5 +19,17 @@ module CastContext
       fields :name
     end
 
+    view :with_history do
+      include_view :list
+
+      field :events_count do |channel|
+        channel.related_tournaments.size
+      end
+
+      field :related_events do |channel| # rubocop:disable Style/SymbolProc
+        channel.related_tournaments
+      end
+    end
+
   end
 end

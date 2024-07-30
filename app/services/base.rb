@@ -20,7 +20,9 @@ class Base
 
   def collect_errors(*resources)
     resources.each do |resource|
-      errors[resource.class.name.downcase.to_sym] = resource.errors.messages.transform_values(&:uniq) if resource.errors.any?
+      if resource.errors.any?
+        errors[resource.class.name.downcase.to_sym] = resource.errors.messages.transform_values(&:uniq)
+      end
     end
   end
 

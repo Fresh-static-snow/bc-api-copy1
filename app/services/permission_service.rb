@@ -7,7 +7,7 @@ class PermissionService
   EXCLUDED_CLASS_NAMES = %w[Class ActiveStorage::Attachment ActiveStorage::Blob].freeze
 
   BASIC_MODELS = [
-    Corporate.name, GameDiscipline.name, Tournament.name, Match.name, MatchCast.name, Sponsor.name,
+    Corporate.name, GameDiscipline.name, Tournament.name, Match.name, Segment.name, MatchCast.name, Sponsor.name,
     User.name, UserCompany.name, CorporateCompany.name, UserDiscipline.name, Role.name, Branding.name
   ].freeze
 
@@ -16,7 +16,7 @@ class PermissionService
   def self.filtered_class_names
     return @filtered_class_names if @filtered_class_names.present?
 
-    model_classes = [Corporate, GameDiscipline, Tournament, Match, MatchCast,
+    model_classes = [Corporate, GameDiscipline, Tournament, Match, Segment, MatchCast,
                      UserCompany, CorporateCompany, UserDiscipline, Branding]
 
     class_names = model_classes.flat_map { |model_class| model_class.reflect_on_all_associations.map(&:class_name) }
@@ -79,7 +79,7 @@ class PermissionService
 
     permissions = []
     filtered_class_names.uniq.each do |name|
-      resource_actions += %i[bulk_destroy bulk_restore bulk_soft_destroy] if name == 'Match'
+      resource_actions += %i[bulk_destroy bulk_restore bulk_soft_destroy] if %w[Match Segment].include? name
 
       resource_actions.each do |action|
         %i[grant deny].each do |access_type|
@@ -126,7 +126,7 @@ class PermissionService
       end
     end
 
-    [Corporate.name, Tournament.name, Match.name].freeze.each do |name|
+    [Corporate.name, Tournament.name, Match.name, Segment.name].freeze.each do |name|
       %i[grant deny].each do |access_type|
         permissions << {
           id: permissions.length,
@@ -199,7 +199,7 @@ class PermissionService
     permissions << {
       id: :create_entity,
       name: "Create/Edit entities",
-      description: "Create/Edit entities (discipline, event, match, corporate)",
+      description: "Create/Edit entities (discipline, event, match, segment, corporate)",
       target_type: :special,
       target_name: nil,
       access_type: nil,
@@ -239,37 +239,37 @@ class PermissionService
   def self.map_special_permission # rubocop:disable Metrics/AbcSize
     @map_special_permission ||= {
       calendar_day: permissions.filter do |p|
-        %w[Calendar Tournament Match Corporate].include?(p[:target_name]) &&
+        %w[Calendar Tournament Match Segment Corporate].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[day index show].include?(p[:access_for])
       end.pluck(:id),
       calendar_week: permissions.filter do |p|
-        %w[Calendar Tournament Match Corporate].include?(p[:target_name]) &&
+        %w[Calendar Tournament Match Segment Corporate].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[week index show].include?(p[:access_for])
       end.pluck(:id),
       calendar_month: permissions.filter do |p|
-        %w[Calendar Tournament Match Corporate].include?(p[:target_name]) &&
+        %w[Calendar Tournament Match Segment Corporate].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[month index show].include?(p[:access_for])
       end.pluck(:id),
       calendar_quarter: permissions.filter do |p|
-        %w[Calendar Tournament Match Corporate].include?(p[:target_name]) &&
+        %w[Calendar Tournament Match Segment Corporate].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[quarter index show].include?(p[:access_for])
       end.pluck(:id),
       calendar_year: permissions.filter do |p|
-        %w[Calendar Tournament Match Corporate].include?(p[:target_name]) &&
+        %w[Calendar Tournament Match Segment Corporate].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[year index show].include?(p[:access_for])
       end.pluck(:id),
       event_view: permissions.filter do |p|
-        %w[Tournament Match Corporate GameDiscipline].include?(p[:target_name]) &&
+        %w[Tournament Match Segment Corporate GameDiscipline].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[only_visible].include?(p[:access_for])
       end.pluck(:id),
       create_entity: permissions.filter do |p|
-        %w[Tournament Match Corporate GameDiscipline].include?(p[:target_name]) &&
+        %w[Tournament Match Segment Corporate GameDiscipline].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[all].include?(p[:access_for])
       end.pluck(:id) + permissions.filter do |p|
@@ -281,6 +281,8 @@ class PermissionService
           CastContext::Language
           CastContext::AnalyticStudio
           CastContext::Studio
+          CastContext::Setup
+          CastContext::Stream
           MatchContext::Analytics
           MatchContext::Commentators
           MatchContext::StaffMembers
@@ -323,6 +325,8 @@ class PermissionService
           CastContext::Language
           CastContext::AnalyticStudio
           CastContext::Studio
+          CastContext::Setup
+          CastContext::Stream
           MatchContext::Analytics
           MatchContext::Commentators
           MatchContext::StaffMembers
@@ -340,7 +344,7 @@ class PermissionService
           %i[all].include?(p[:access_for])
       end.pluck(:id) + permissions.filter do |p|
         %w[
-          Match
+          Match Segment
         ].include?(p[:target_name]) &&
           %i[grant].include?(p[:access_type]) &&
           %i[bulk_destroy bulk_restore bulk_soft_destroy].include?(p[:access_for])

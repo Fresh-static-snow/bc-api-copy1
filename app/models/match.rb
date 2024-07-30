@@ -10,6 +10,8 @@
 #  end_at           :datetime
 #  google_event_ids :jsonb
 #  start_at         :datetime
+#  title            :string
+#  type             :string
 #  visible          :boolean          default(FALSE), not null
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
@@ -60,6 +62,10 @@ class Match < ApplicationRecord
 
   def self.get_best_of(value)
     BEST_OF.find { |option| option[:value] == value }
+  end
+
+  def type_segment?
+    type == 'Segment'
   end
 
 end

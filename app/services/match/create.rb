@@ -32,14 +32,10 @@ class Match
         send_notify(resource, added_user_ids, :create, :added)
         send_admin_notify(resource, :create, true)
 
-        Match::AddedCast.new(resource).changed_records.uniq(&:user_id).each do |talent|
-          BotsNotification::MatchNotifiable.new(resource, talent, :create).perform if notifiable_rules(talent.user)
-        end
+        users = Match::AddedCast.new(resource).changed_records.map(&:user) +
+                TournamentContext::MainParticipants.where(tournament_id: resource.tournament.id).map(&:user)
 
-        TournamentContext::MainParticipants.where(tournament_id: resource.tournament.id).find_each do |mp|
-          BotsNotification::MatchNotifiable.new(resource, mp, :create).perform if notifiable_rules(mp.user)
-        end
-
+        BotsNotifyJob.perform_later(users, resource, match_message_text(:create), :create)
       end
 
       resource
@@ -48,7 +44,7 @@ class Match
     private
 
     def create_resource
-      @resource = Match.create(params)
+      @resource = Match.create(params.merge(type: 'Match'))
     end
 
     def notifiable_rules(user)

@@ -37,6 +37,25 @@ class User
     def create_user
       @resource = User.new(user_params)
       @resource.invite! if @resource.save
+      process_image
+    end
+
+    def process_image # rubocop:disable Metrics/AbcSize
+      processed_image = ImageProcessing::MiniMagick
+                        .source(user_params[:avatar])
+                        .resize_to_fill(300, 300)
+                        .convert("webp")
+                        .call
+
+      @resource&.avatar&.purge
+      resource.reload.avatar.attach(
+        io: File.open(processed_image.path),
+        filename: "#{user_params[:avatar].original_filename}.webp",
+        content_type: "image/webp"
+      )
+    rescue StandardError => e
+      Sentry.capture_exception(e)
+      Rails.logger.error "Image processing error: #{e.message}"
     end
 
   end

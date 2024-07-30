@@ -22,6 +22,8 @@ module CalendarMatches
           analytic_studio
           language
           studio
+          setup
+          stream
           cast_channels
         ] }
       ]
@@ -29,6 +31,9 @@ module CalendarMatches
       results = Match.includes(*join_includes)
                      .joins('LEFT JOIN match_casts ON match_casts.match_id = matches.id')
                      .joins('LEFT JOIN match_commentators ON match_commentators.match_cast_id = match_casts.id')
+                     .joins('LEFT JOIN match_backup_commentators ON
+                             match_backup_commentators.match_cast_id = match_casts.id')
+                     .joins('LEFT JOIN match_host_analytics ON match_host_analytics.match_cast_id = match_casts.id')
                      .joins('LEFT JOIN match_analytics ON match_analytics.match_cast_id = match_casts.id')
                      .joins('LEFT JOIN match_staff_members ON match_staff_members.match_cast_id = match_casts.id')
                      .joins("LEFT JOIN active_storage_attachments AS ast ON (ast.record_type = 'User' AND
@@ -38,7 +43,7 @@ module CalendarMatches
                      .joins("LEFT JOIN active_storage_blobs AS asb ON asb.id = ast.blob_id")
       results = results.distinct.select(
         'matches.visible, matches.team_one_id, matches.team_two_id, matches.start_at, matches.end_at, matches.best_of,
-          matches.tournament_id, matches.id, tournaments.top'
+          matches.tournament_id, matches.id, matches.type, matches.title, tournaments.top'
       ).left_joins(*join_includes)
 
       results = Match.filter(

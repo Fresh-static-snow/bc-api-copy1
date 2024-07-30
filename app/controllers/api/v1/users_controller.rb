@@ -121,7 +121,8 @@ module Api
           :discord_user_id,
           :time_zone,
           role_ids: [],
-          user_discipline_ids: []
+          user_discipline_ids: [],
+          account_setting: %i[current_user_filter_enabled default_calendar_scope]
         )
       end
 

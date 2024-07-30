@@ -32,10 +32,28 @@ module MatchCastModule
       }
       belongs_to :studio, studio_options
 
-      has_one :match_backup_commentator, class_name: 'MatchContext::BackupCommentator', dependent: :destroy
-      has_one :backup_commentator, through: :match_backup_commentator, source: :user
-      has_one :backup_commentator_deleted, -> { User.only_deleted }, through: :match_backup_commentator, source: :user
-      accepts_nested_attributes_for :match_backup_commentator, allow_destroy: true
+      setup_options = {
+        class_name: 'CastContext::Setup',
+        foreign_key: :cast_setup_id,
+        inverse_of: :match_casts,
+        optional: true
+      }
+      belongs_to :setup, setup_options
+
+      stream_options = {
+        class_name: 'CastContext::Stream',
+        foreign_key: :cast_stream_id,
+        inverse_of: :match_casts,
+        optional: true
+      }
+      belongs_to :stream, stream_options
+
+      has_many :match_backup_commentators, class_name: 'MatchContext::BackupCommentator', dependent: :destroy
+      has_many :backup_commentators, through: :match_backup_commentators, source: :user
+      has_many :backup_commentators_deleted, -> {
+                                               User.only_deleted
+                                             }, through: :match_backup_commentators, source: :user
+      accepts_nested_attributes_for :match_backup_commentators, allow_destroy: true
 
       has_one :match_host_analytic, class_name: 'MatchContext::HostAnalytic', dependent: :destroy
       has_one :host_analytic, through: :match_host_analytic, source: :user
@@ -45,6 +63,7 @@ module MatchCastModule
       has_many :match_casts_channels, dependent: :destroy, source: :channel
       has_many :cast_channels, through: :match_casts_channels, dependent: :destroy, source: :channel
       has_many :channels, through: :match_casts_channels, dependent: :destroy, source: :channel
+      has_many :channels_deleted, -> { Channel.only_deleted }, through: :match_casts_channels, source: :channel
       accepts_nested_attributes_for :match_casts_channels, allow_destroy: true
       accepts_nested_attributes_for :cast_channels, allow_destroy: true
 

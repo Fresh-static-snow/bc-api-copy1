@@ -111,6 +111,7 @@ m = Module.new do
     yield
     nil
   rescue StandardError, LoadError => e
+    Sentry.capture_exception(e)
     e
   end
 end

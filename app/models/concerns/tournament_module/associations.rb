@@ -24,7 +24,9 @@ module TournamentModule
       accepts_nested_attributes_for :media, allow_destroy: true, reject_if: :reject_media
 
       has_many :tournament_main_participants, class_name: 'TournamentContext::MainParticipants', dependent: :destroy
-      has_many :main_participants, -> { User.with_history.distinct }, through: :tournament_main_participants, source: :user
+      has_many :main_participants, -> {
+                                     User.with_history.distinct
+                                   }, through: :tournament_main_participants, source: :user
       has_many :main_participants_without_history, through: :tournament_main_participants, source: :user
 
       has_many :tournament_media_representatives, class_name: 'TournamentContext::MediaRepresentatives',
@@ -49,9 +51,11 @@ module TournamentModule
       has_many :commentators, -> { User.with_history.distinct }, through: :match_context_commentators, source: :user
       has_many :commentators_without_history, through: :match_context_commentators, source: :user
 
-      has_many :match_backup_commentator, class_name: 'MatchContext::BackupCommentator', dependent: :destroy
-      has_many :backup_commentators, -> { User.with_history.distinct }, through: :match_backup_commentator, source: :user
-      accepts_nested_attributes_for :match_backup_commentator, allow_destroy: true
+      has_many :match_backup_commentators, class_name: 'MatchContext::BackupCommentator', dependent: :destroy
+      has_many :backup_commentators, -> {
+                                       User.with_history.distinct
+                                     }, through: :match_backup_commentators, source: :user
+      accepts_nested_attributes_for :match_backup_commentators, allow_destroy: true
 
       has_many :match_host_analytic, class_name: 'MatchContext::HostAnalytic', dependent: :destroy
       has_many :host_analytics, -> { User.with_history.distinct }, through: :match_host_analytic, source: :user

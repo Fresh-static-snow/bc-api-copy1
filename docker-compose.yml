@@ -1,0 +1,94 @@
+services:
+  maincast-calendar-database:
+    image: postgres:16.1-alpine
+    container_name: maincast-calendar-database
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./data/pg:/var/lib/postgresql/data/
+      - ./data.sql:/data.sql
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: "-A md5"
+      PGDATA: /var/lib/postgresql/data/
+      POSTGRES_WORK_MEM: 256MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 512MB
+      POSTGRES_SHARED_BUFFERS: 512MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 512MB
+      POSTGRES_MAX_CONNECTIONS: 100
+      POSTGRES_CHECKPOINT_TIMEOUT: 15min
+      POSTGRES_CHECKPOINT_COMPLETION_TARGET: 0.9
+    ports:
+      - "54321:5432"
+    networks:
+      - maincast-calendar-net
+
+  maincast-calendar-ruby: &maincast-calendar-ruby
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maincast-calendar-ruby
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - maincast-calendar-database
+      - maincast-calendar-redis
+      - maincast-calendar-mailer
+    networks:
+      - maincast-calendar-net
+
+  maincast-calendar-api:
+    <<: *maincast-calendar-ruby
+    container_name: maincast-calendar-api
+    ports:
+      - "3000:3000"
+    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+
+  maincast-calendar-sidekiq:
+    <<: *maincast-calendar-ruby
+    container_name: maincast-calendar-sidekiq
+    command: sidekiq
+
+  maincast-calendar-redis:
+    image: redis:7.2.1-alpine
+    container_name: maincast-calendar-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - maincast-calendar-net
+
+  maincast-calendar-mailer:
+    image: axllent/mailpit
+    container_name: maincast-calendar-mailer
+    restart: unless-stopped
+    hostname: localhost
+    volumes:
+      - 'mailpit:/data'
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - maincast-calendar-net
+
+volumes:
+  redis-data:
+  mailpit:
+
+networks:
+  maincast-calendar-net:
+    driver: bridge

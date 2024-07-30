@@ -6,6 +6,7 @@ module EntityCommentModule
     extend ActiveSupport::Concern
 
     included do
+      belongs_to :entity, polymorphic: true
       belongs_to :user
     end
 

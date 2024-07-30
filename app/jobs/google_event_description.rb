@@ -11,10 +11,12 @@ module GoogleEventDescription
       link += "/calendar/day?start_at=#{match.start_at.to_date}&current_user=true\n\n"
       language = "Language: #{cast.language&.name}\n"
       studio = "Studio: #{cast.studio&.name}\n"
+      setup = "Setup: #{cast.setup&.name}\n"
+      stream = "Stream: #{cast.stream&.name}\n"
       analytic_studio = "Analytic Studio: #{cast.analytic_studio&.name}\n"
       channels = "Channels: #{cast.channels.pluck(:name).join(', ')}\n"
 
-      description += "#{link}#{language}#{studio}#{analytic_studio}#{channels}\n"
+      description += "#{link}#{language}#{studio}#{analytic_studio}#{setup}#{stream}#{channels}\n"
 
       commentators = []
       cast.match_commentators.map do |a|

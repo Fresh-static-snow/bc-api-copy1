@@ -37,9 +37,7 @@ class Tournament
       send_notify(resource, added_user_ids, :create, :added)
       send_admin_notify(resource, :create, true)
 
-      User.managment_staff.find_each do |user|
-        BotsNotification::TournamentNotifiable.new(resource, user, :create).perform
-      end
+      BotsNotifyJob.perform_later(User.managment_staff.to_a, resource, tournament_message_text(:create), :create)
     end
 
     def create_resource

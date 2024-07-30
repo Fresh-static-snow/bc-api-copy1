@@ -92,6 +92,11 @@ gem 'daemons'
 
 gem 'discordrb'
 
+# Logging
+gem 'sentry-rails', '~> 5.18.1'
+gem 'sentry-ruby', '~> 5.18.1'
+gem 'stackprof', '~> 0.2.26'
+
 group :development, :test do
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
 

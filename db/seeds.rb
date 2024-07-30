@@ -24,14 +24,14 @@ user_discipline << UserDiscipline.find_or_create_by(title: 'Staff')
 user_discipline << UserDiscipline.find_or_create_by(title: 'Participant')
 user_discipline << UserDiscipline.find_or_create_by(title: 'Main Participant')
 user_discipline << UserDiscipline.find_or_create_by(title: 'Media Representative')
-user_discipline << UserDiscipline.find_or_create_by(title: 'Commentator')
-user_discipline << UserDiscipline.find_or_create_by(title: 'Analytic')
+user_discipline << UserDiscipline.find_or_create_by(title: 'Caster')
+user_discipline << UserDiscipline.find_or_create_by(title: 'Analyst')
 user_discipline << UserDiscipline.find_or_create_by(title: 'Manager')
 
 user_company = UserCompany.find_or_create_by(title: 'Maincast')
 user_company.save
 
-user = User.find_or_create_by(email: ENV.fetch('ADMIN_EMAIL', 'calendar@maincast.com')) do |user|
+user = User.find_or_create_by(email: 'calendar@maincast.com') do |user|
   user.email = ENV.fetch('ADMIN_EMAIL', 'calendar@maincast.com')
   user.password = ENV.fetch('ADMIN_PASSWORD', 'password1!')
   user.password_confirmation = ENV.fetch('ADMIN_PASSWORD', 'password1!')

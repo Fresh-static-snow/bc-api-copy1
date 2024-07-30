@@ -16,6 +16,14 @@ module SendNotify
         UserNotification::Send.call(resource, current_user, u, entity_action, personal, nil)
       end
     end
+
+    def match_message_text(action_name)
+      BotsNotification::MatchNotifiable.new(resource, action_name).message_text
+    end
+
+    def tournament_message_text(action_name)
+      BotsNotification::TournamentNotifiable.new(resource, action_name).message_text
+    end
   end
 
 end

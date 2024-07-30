@@ -16,6 +16,8 @@ module ManagementContext
             tournaments_object
           when 'Match'
             tournament_matches_object
+          when 'Segment'
+            tournament_segments_object
           else
             default_object(resource_class)
           end
@@ -67,16 +69,49 @@ module ManagementContext
           end
         end
 
-        def matches_object(tournament)
+        def tournament_segments_object(tournament: Tournament)
+          tournament
+            .with_deleted
+            .joins("LEFT JOIN matches ON matches.tournament_id = tournaments.id AND matches.deleted_at IS NOT NULL")
+            .where("matches.deleted_at IS NOT NULL")
+            .where("matches.type = 'Segment'")
+            .distinct&.map do |tournament_object|
+            {
+              id: tournament_object.id,
+              title: tournament_object.title,
+              matches: segments_object(tournament_object)
+            }
+          end
+        end
+
+        def segments_object(tournament)
+          Segment
+            .only_deleted
+            .where(tournament_id: tournament.id)
+            .order(:start_at)
+            .distinct&.map do |segment|
+              {
+                id: segment.id,
+                title: segment.title,
+                type: segment.type,
+                tournament_name: tournament.title
+              }
+            end
+        end
+
+        def matches_object(tournament) # rubocop:disable Metrics/AbcSize
           Match
             .only_deleted
             .includes(:team_one, :team_two)
+            .where(type: %w[Match Segment])
             .where(tournament_id: tournament.id)
             .order(:start_at)
             .distinct&.map do |match|
               {
                 id: match.id,
                 tournament_name: tournament.title,
+                type: match.type,
+                title: match.title,
                 team_one_name: match.team_one&.name || 'TBD',
                 team_two_name: match.team_two&.name || "TBD"
               }

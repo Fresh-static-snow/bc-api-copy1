@@ -10,10 +10,6 @@ module UserModule
     included do
       validates_presence_of MANDATORY_FIELDS
 
-      validates :avatar,
-                content_type: %w[image/png image/jpg image/jpeg image/svg+xml].freeze,
-                size: { less_than: 1024.kilobytes }
-
       validates :email, uniqueness: true
       validate :validate_name_exist
 

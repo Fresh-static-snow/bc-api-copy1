@@ -7,15 +7,19 @@ module CorporateModule
 
     included do
       scope :filter_by_focused_date, -> (focused_date) {
-        where('start_at = ? OR (? between start_at AND end_at)', focused_date.in_time_zone, focused_date.in_time_zone)
+        where(
+          'start_at = ? OR (? between start_at AND end_at)',
+          focused_date.change(offset: 'EEST'),
+          focused_date.change(offset: 'EEST')
+        )
       }
 
       scope :filter_by_period_from, -> (period_from) {
-        where('end_at >= ?', period_from.in_time_zone)
+        where('end_at >= ?', period_from.change(offset: 'EEST'))
       }
 
       scope :filter_by_period_to, -> (period_to) {
-        where('start_at <= ?', period_to.in_time_zone)
+        where('start_at <= ?', period_to.change(offset: 'EEST'))
       }
 
       scope :filter_by_main_participants, -> (main_participants_id) {
@@ -31,6 +35,12 @@ module CorporateModule
         where('corporate_participants.user_id': analytics_id)
       }
       scope :filter_by_commentators, -> (commentator_id) {
+        where('corporate_participants.user_id': commentator_id)
+      }
+      scope :filter_by_host_analytic, -> (analytics_id) {
+        where('corporate_participants.user_id': analytics_id)
+      }
+      scope :filter_by_backup_commentators, -> (commentator_id) {
         where('corporate_participants.user_id': commentator_id)
       }
 
@@ -61,6 +71,16 @@ module CorporateModule
         if params[:commentators].present?
           conditions << "corporate_participants.user_id IN (?)"
           conditions_params << params[:commentators]
+        end
+
+        if params[:backup_commentators].present?
+          conditions << "corporate_participants.user_id IN (?)"
+          conditions_params << params[:backup_commentators]
+        end
+
+        if params[:host_analytic].present?
+          conditions << "corporate_participants.user_id IN (?)"
+          conditions_params << params[:host_analytic]
         end
 
         query = conditions.join(" OR ")

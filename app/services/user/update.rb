@@ -33,20 +33,39 @@ class User
 
     private
 
-    def update_resource
+    def update_resource # rubocop:disable Metrics/AbcSize
       destroy_deleted_items
 
       if params[:avatar] == ""
         resource&.avatar&.purge
         resource.update(params.except(:avatar))
       else
-        resource.update(params)
+        resource.update(params.except(:avatar))
+        process_image
       end
     end
 
     def destroy_deleted_items
       UserRole.only_deleted.where(user_id: resource.id).find_each(&:destroy_fully!)
       UserDisciplineMembership.only_deleted.where(user_id: resource.id).find_each(&:destroy_fully!)
+    end
+
+    def process_image # rubocop:disable Metrics/AbcSize
+      processed_image = ImageProcessing::MiniMagick
+                        .source(params[:avatar])
+                        .resize_to_fill(300, 300)
+                        .convert("webp")
+                        .call
+
+      resource&.avatar&.purge
+      resource.reload.avatar.attach(
+        io: File.open(processed_image.path),
+        filename: "#{params[:avatar].original_filename}.webp",
+        content_type: "image/webp"
+      )
+    rescue StandardError => e
+      Sentry.capture_exception(e)
+      Rails.logger.error "Image processing error: #{e.message}"
     end
 
   end

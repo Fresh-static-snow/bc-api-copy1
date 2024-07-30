@@ -53,9 +53,7 @@ class Tournament
         send_notify(resource, deleted_user_ids.uniq, :update, :deleted)
         send_admin_notify(resource, :update, true)
 
-        User.managment_staff.find_each do |user|
-          BotsNotification::TournamentNotifiable.new(resource, user, :update).perform
-        end
+        BotsNotifyJob.perform_later(User.managment_staff.to_a, resource, tournament_message_text(:update), :update)
 
         Tournament::RunAfterUpdateJob.perform_later(resource)
       end

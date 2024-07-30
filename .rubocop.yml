@@ -23,7 +23,7 @@ Layout/FirstHashElementIndentation:
 Layout/FirstArrayElementIndentation:
   Enabled: false
 Layout/LineLength:
-  Max: 130
+  Max: 120
 Layout/TrailingEmptyLines:
   EnforcedStyle: final_newline
 Layout/SpaceInLambdaLiteral:

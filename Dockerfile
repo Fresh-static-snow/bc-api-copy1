@@ -13,7 +13,8 @@ RUN apk --update --no-cache add \
   libxml2-dev \
   libxslt-dev \
   libc6-compat \
-  less
+  less \
+  imagemagick
 
 RUN mkdir /app
 WORKDIR /app

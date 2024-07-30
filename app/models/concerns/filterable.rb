@@ -8,6 +8,8 @@ module Filterable
   OR_SCOPES = %w[
     filter_by_studio
     filter_by_analytic_studio
+    filter_by_setup
+    filter_by_stream
     filter_by_channels
     filter_by_managers
     filter_by_main_participants
@@ -15,6 +17,8 @@ module Filterable
     filter_by_staff_members
     filter_by_analytics
     filter_by_commentators
+    filter_by_host_analytic
+    filter_by_backup_commentators
   ].freeze
 
   module ClassMethods

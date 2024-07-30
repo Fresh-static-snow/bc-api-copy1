@@ -31,6 +31,7 @@ Rails.application.routes.draw do
       get 'calendar/filters', to: 'calendar#filters'
 
       get 'matches/types', to: 'matches#types'
+      get 'segments/types', to: 'segments#types'
 
       resources :entity_comments, only: %i[index show create edit update destroy]
 
@@ -60,6 +61,21 @@ Rails.application.routes.draw do
           put '/restore', to: 'matches#restore'
         end
       end
+
+      resources :segments, only: %i[index show create edit update destroy] do
+        collection do
+          delete '/destroy', to: 'segments#bulk_destroy'
+          delete '/soft_destroy', to: 'segments#bulk_soft_destroy'
+          put '/restore', to: 'segments#bulk_restore'
+        end
+
+        member do
+          delete '/soft_destroy', to: 'segments#soft_destroy'
+          put '/restore', to: 'segments#restore'
+        end
+      end
+      get 'segments/:id/media', to: 'segments#media'
+      get 'segments/:id/comments', to: 'segments#comments'
 
       get 'corporates/:id/comments', to: 'corporates#comments'
       resources :corporates, only: %i[show create edit update destroy]
@@ -100,6 +116,7 @@ Rails.application.routes.draw do
       get 'users/:id/resent_invite', to: 'users#resent_invite'
 
       resource :settings, only: %i[show update]
+      resource :account_setting, only: %i[show update]
 
       post 'user_notifications/read', to: 'user_notifications#mark_as_read'
 
@@ -118,6 +135,14 @@ Rails.application.routes.draw do
         resources :studios, only: %i[index show create edit update destroy]
         delete 'studios/:id/soft_destroy', to: 'studios#soft_destroy'
         put 'studios/:id/restore', to: 'studios#restore'
+
+        resources :setups, only: %i[index show create edit update destroy]
+        delete 'setups/:id/soft_destroy', to: 'setups#soft_destroy'
+        put 'setups/:id/restore', to: 'setups#restore'
+
+        resources :streams, only: %i[index show create edit update destroy]
+        delete 'streams/:id/soft_destroy', to: 'streams#soft_destroy'
+        put 'streams/:id/restore', to: 'streams#restore'
 
         resources :channels, only: %i[index show create edit update destroy]
         delete 'channels/:id/soft_destroy', to: 'channels#soft_destroy'

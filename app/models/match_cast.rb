@@ -9,6 +9,8 @@
 #  backup_commentator_id   :integer
 #  cast_analytic_studio_id :integer
 #  cast_language_id        :integer
+#  cast_setup_id           :integer
+#  cast_stream_id          :integer
 #  cast_studio_id          :integer
 #  host_analytic_id        :integer
 #  match_id                :integer

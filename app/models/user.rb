@@ -69,6 +69,7 @@ class User < ApplicationRecord
 
   before_save :set_default_names
   after_update :change_user
+  after_create -> { create_account_setting }
 
   SCOPES_BY_DISCIPLINE_OR_DEFAULT = %w[staff_members participants main_participants media_representatives commentators
                                        analytics managers only_deleted].freeze
@@ -138,7 +139,7 @@ class User < ApplicationRecord
   end
 
   def user_has_required_disciplines?
-    user_disciplines.where(title: %w[Commentator Analytic]).exists?
+    user_disciplines.exists?(title: %w[Caster Analyst])
   end
 
 end

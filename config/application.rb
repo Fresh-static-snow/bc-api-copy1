@@ -44,7 +44,7 @@ module BroadcastShiftCalendar
     config.api_only = true
 
     # This also configures session_options for use below
-    config.session_store :cookie_store, key: '_broadcast-shift-calendar-session'
+    config.session_store :cookie_store, key: ENV.fetch('COOKIE_STORE_KEY', '_broadcast-shift-calendar-session')
 
     # Required for all session management (regardless of session_store)
     config.middleware.use ActionDispatch::Cookies
@@ -54,12 +54,10 @@ module BroadcastShiftCalendar
     config.middleware.insert_before 0, Rack::Cors do
       allow do
         origins(
-          'http://localhost:3000',
-          'http://localhost:9000',
-          'https://broadcast-shift-calendar-dev.netlify.app',
-          'https://crm.maincast.com',
-          'https://next-crm.maincast.com',
-          'https://demo-crm.maincast.com'
+          ENV.fetch('BASE_BACK_URL', 'http://localhost:3000'),
+          ENV.fetch('BASE_FRONT_URL', 'http://localhost:9000'),
+          ENV.fetch('PRODUCTION_URL', 'https://crm.maincast.com'),
+          ENV.fetch('STAGING_URL', 'https://next-crm.maincast.com')
         )
 
         resource(
@@ -77,12 +75,10 @@ module BroadcastShiftCalendar
     # Mount Action Cable outside main process or domain.root_api_url
     config.action_cable.url = ENV.fetch('ACTION_CABLE_URL', 'ws://localhost:3000/cable')
     config.action_cable.allowed_request_origins = [
-      /http:\/\/localhost:3000\/*/,
-      /http:\/\/localhost:9000\/*/,
-      /https:\/\/broadcast-shift-calendar-dev.netlify.app\/*/,
-      /https:\/\/crm.maincast.com\/*/,
-      /https:\/\/next-crm.maincast.com\/*/,
-      /https:\/\/demo-crm.maincast.com\/*/,
+      /#{Regexp.quote(ENV.fetch('BASE_BACK_URL', 'http://localhost:3000'))}\/*/,
+      /#{Regexp.quote(ENV.fetch('BASE_FRONT_URL', 'http://localhost:9000'))}\/*/,
+      /#{Regexp.quote(ENV.fetch('PRODUCTION_URL', 'https://crm.maincast.com'))}\/*/,
+      /#{Regexp.quote(ENV.fetch('STAGING_URL', 'https://next-crm.maincast.com'))}\/*/,
       /https:\/\/192.168.65.1\/*/
     ]
 

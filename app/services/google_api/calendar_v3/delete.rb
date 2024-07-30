@@ -17,7 +17,8 @@ module GoogleApi
 
       def call
         calendar.delete_event(calendar_id, event_id)
-      rescue Google::Apis::ClientError
+      rescue Google::Apis::ClientError => e
+        Sentry.capture_exception(e)
         nil
       end
 

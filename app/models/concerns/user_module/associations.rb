@@ -6,10 +6,13 @@ module UserModule
     extend ActiveSupport::Concern
 
     included do
-      has_one_attached :avatar, dependent: :purge_later
+      has_one_attached :avatar, dependent: :purge
 
       has_one :sign_up_request, dependent: :destroy
       has_one :user_api_token, dependent: :destroy
+
+      has_one :account_setting, dependent: :destroy, autosave: true
+      accepts_nested_attributes_for :account_setting, update_only: true
 
       has_many :user_discipline_memberships, dependent: :destroy
       has_many :user_disciplines, through: :user_discipline_memberships
@@ -32,7 +35,8 @@ module UserModule
       has_many :match_host_analytics, class_name: 'MatchContext::HostAnalytic', dependent: :destroy, source: :match_cast
       has_many :host_analytics, class_name: 'MatchCast', through: :match_host_analytics, source: :match_cast
 
-      has_many :match_backup_commentators, class_name: 'MatchContext::BackupCommentator', dependent: :destroy, source: :match_cast
+      has_many :match_backup_commentators, class_name: 'MatchContext::BackupCommentator', dependent: :destroy,
+                                           source: :match_cast
       has_many :backup_commentators, class_name: 'MatchCast', through: :match_backup_commentators, source: :match_cast
 
       has_many :tournament_main_participants, class_name: 'TournamentContext::MainParticipants', dependent: :destroy

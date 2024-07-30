@@ -17,6 +17,8 @@ class Calendar
           'game_discipline' => GameDiscipline::List.call(params),
           'studio' => CastContext::Studio::List.call(params),
           'analytic_studio' => CastContext::AnalyticStudio::List.call(params),
+          'setup' => CastContext::Setup::List.call(params),
+          'stream' => CastContext::Stream::List.call(params),
           'channel' => CastContext::Channel::List.call(params),
           'managers' => User::List.call(params.merge(scope: :managers)),
           'main_participants' => User::List.call(params.merge(scope: :main_participants)),

@@ -19,6 +19,8 @@ class MatchCastsChannel < ApplicationRecord
 
   self.table_name = :match_casts_channels
 
+  acts_as_paranoid
+
   include MatchCastsChannelModule::Associations
 
 end

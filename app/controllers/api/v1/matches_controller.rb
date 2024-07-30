@@ -19,17 +19,17 @@ module Api
       end
 
       def types
-        authorize Match
+        authorize resource_class
 
-        result = Match::BEST_OF
+        result = resource_class::BEST_OF
         render_json_response(true, result, :ok)
       end
 
       def create
-        authorize Match
+        authorize resource_class
 
         match_params_with_discipline = prepare_match_params(resource_params)
-        data = Match::Create.call(match_params_with_discipline, current_user)
+        data = resource_class::Create.call(match_params_with_discipline, current_user)
         handle_entity_result(data, :ok)
       end
 
@@ -37,7 +37,7 @@ module Api
         authorize resource
 
         match_params_with_discipline = prepare_match_params(resource_params)
-        data = Match::Update.call(resource, match_params_with_discipline, current_user)
+        data = resource_class::Update.call(resource, match_params_with_discipline, current_user)
         handle_entity_result(data, :ok)
       end
 
@@ -129,15 +129,15 @@ module Api
             :_destroy,
             :cast_language_id,
             :cast_studio_id,
-            :backup_commentator_id,
-            :host_analytic_id,
+            :cast_setup_id,
+            :cast_stream_id,
             :cast_analytic_studio_id,
             {
               cast_channel_ids: [],
               analytic_ids: [],
               commentator_ids: [],
               staff_member_ids: [],
-              match_backup_commentator_attributes: [:user_id],
+              backup_commentator_ids: [],
               match_host_analytic_attributes: [:user_id]
             }
           ]

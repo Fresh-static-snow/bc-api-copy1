@@ -24,5 +24,11 @@ module CastContext
     include ChannelModule::Scopes
     include ChannelModule::Validations
 
+    def related_tournaments
+      Tournament.joins(matches: { match_casts: :match_casts_channels })
+                .where(match_casts_channels: { channel_id: id })
+                .distinct
+    end
+
   end
 end

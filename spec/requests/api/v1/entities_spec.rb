@@ -4,6 +4,83 @@ require 'rails_helper'
 require 'swagger_helper'
 
 RSpec.describe 'Api::V1::Entities', type: :request do
+  path '/api/v1/account_setting' do
+    get 'Get account setting' do
+      tags 'Account Setting'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      response '200', 'user soft destroy' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'user soft delete' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/account_setting' do
+    put 'Get account setting' do
+      tags 'Account Setting'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :current_user_filter_enabled, in: :formData, type: :boolean
+      parameter name: :default_calendar_scope, in: :formData, type: :string
+
+      response '200', 'user soft destroy' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'user soft delete' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
   path '/api/v1/calendar' do
     get 'Get entities list' do
       tags 'Calendar'
@@ -18,6 +95,8 @@ RSpec.describe 'Api::V1::Entities', type: :request do
       parameter name: :game_discipline, in: :query, type: :array
       parameter name: :studio, in: :query, type: :array
       parameter name: :analytic_studio, in: :query, type: :array
+      parameter name: :setup, in: :query, type: :array
+      parameter name: :stream, in: :query, type: :array
       parameter name: :channel, in: :query, type: :array
       parameter name: :managers, in: :query, type: :array
       parameter name: :main_participants, in: :query, type: :array
@@ -850,6 +929,8 @@ RSpec.describe 'Api::V1::Entities', type: :request do
           "match_casts_attributes[cast_language_id]": { type: :integer },
           "match_casts_attributes[cast_studio_id]": { type: :integer },
           "match_casts_attributes[cast_analytic_studio_id]": { type: :integer },
+          "match_casts_attributes[cast_setup_id]": { type: :integer },
+          "match_casts_attributes[cast_stream_id]": { type: :integer },
           "match_casts_attributes[cast_channel_id]": { type: :integer },
           "match_casts_attributes[analytic_ids]": { type: :array },
           "match_casts_attributes[commentator_ids]": { type: :array },
@@ -2172,6 +2253,594 @@ RSpec.describe 'Api::V1::Entities', type: :request do
       parameter name: :id, in: :path, type: :integer, required: true
 
       response '200', 'edit cast studio' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+    end
+  end
+
+  path '/api/v1/casts/setups' do
+    get 'Get casts setups list' do
+      tags 'Cast Setup'
+      produces 'application/json'
+
+      parameter name: :term, in: :query, type: :string
+      parameter name: :scope, in: :query, schema: {
+        type: :string,
+        enum: %w[only_deleted]
+      }
+      parameter name: :with_history, in: :query, type: :boolean, default: false
+
+      response '200', 'casts setups list' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+    post 'Creates cast setups' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :entity, in: :formData, schema: {
+        type: :object,
+        properties: {
+          "name": { type: :string }
+        },
+        required: %i[name]
+      }
+
+      response '201', 'cast setup created' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:created)
+        end
+      end
+
+      response '422', 'cast setup error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/setups/{id}' do
+    get 'Show cast setup' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'show cast setup' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+    end
+    put 'Update cast setup' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+      parameter name: :entity, in: :formData, schema: {
+        type: :object,
+        properties: {
+          "name": { type: :string }
+        },
+        required: %i[name]
+      }
+
+      response '200', 'cast setup updated' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'cast setup error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+    delete 'Delete cast setup' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'cast setup created' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'cast setup error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/setups/{id}/soft_destroy' do
+    delete 'Soft destroy setup' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'setup soft deleted' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'setup error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/setups/{id}/restore' do
+    put 'Restore deleted setup' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'restore setup' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'restore setup' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/setups/{id}/edit' do
+    get 'Edit cast setup' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'edit cast setup' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+    end
+  end
+
+  path '/api/v1/casts/streams' do
+    get 'Get casts streams list' do
+      tags 'Cast Stream'
+      produces 'application/json'
+
+      parameter name: :term, in: :query, type: :string
+      parameter name: :scope, in: :query, schema: {
+        type: :string,
+        enum: %w[only_deleted]
+      }
+      parameter name: :with_history, in: :query, type: :boolean, default: false
+
+      response '200', 'casts streams list' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+    post 'Creates cast streams' do
+      tags 'Cast Stream'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :entity, in: :formData, schema: {
+        type: :object,
+        properties: {
+          "name": { type: :string }
+        },
+        required: %i[name]
+      }
+
+      response '201', 'cast stream created' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:created)
+        end
+      end
+
+      response '422', 'cast stream error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/streams/{id}' do
+    get 'Show cast stream' do
+      tags 'Cast Stream'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'show cast stream' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+    end
+    put 'Update cast stream' do
+      tags 'Cast Stream'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+      parameter name: :entity, in: :formData, schema: {
+        type: :object,
+        properties: {
+          "name": { type: :string }
+        },
+        required: %i[name]
+      }
+
+      response '200', 'cast stream updated' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'cast stream error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+    delete 'Delete cast stream' do
+      tags 'Cast Stream'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'cast stream created' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'cast stream error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/streams/{id}/soft_destroy' do
+    delete 'Soft destroy stream' do
+      tags 'Cast Stream'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'stream soft deleted' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'stream error' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/streams/{id}/restore' do
+    put 'Restore deleted stream' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'restore stream' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: true
+                 },
+                 "data": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'restore stream' do
+        schema type: :object,
+               properties: {
+                 "success": {
+                   type: :boolean,
+                   default: false
+                 },
+                 "errors": { type: :object }
+               }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+    end
+  end
+  path '/api/v1/casts/streams/{id}/edit' do
+    get 'Edit cast stream' do
+      tags 'Cast Setup'
+      consumes 'multipart/form-data'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, required: true
+
+      response '200', 'edit cast stream' do
         schema type: :object,
                properties: {
                  "success": {

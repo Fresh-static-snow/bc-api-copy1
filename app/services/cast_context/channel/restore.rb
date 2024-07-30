@@ -2,14 +2,6 @@
 
 module CastContext
   class Channel
-    class Restore < BaseRestoreService
-
-      def call
-        HistoryService.recover_history(resource)
-
-        super
-      end
-
-    end
+    class Restore < BaseRestoreService; end
   end
 end
