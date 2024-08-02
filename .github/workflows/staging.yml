@@ -85,7 +85,7 @@ jobs:
               -e DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}' \
               -e REDIS_URL='redis://localhost:6379/11' \
               -e ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable' \
-              -e LANG=C.UTF-8  \
+              -e LANG=C.UTF-8 \
               -e RAILS_ENV=production \
               -e RAILS_MIN_THREADS=1 \
               -e RAILS_MAX_THREADS=10 \
