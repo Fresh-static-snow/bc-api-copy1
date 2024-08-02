@@ -9,22 +9,38 @@ on:
       - staging
 
 jobs:
-  ci:
+  deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ruby-version: [ '3.0.2' ]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby-version }}
-          bundler-cache: true
-      - name: Run linter
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Extract repository name and owner, and convert to lowercase
+        id: extract_repo
         run: |
-          bundle exec rubocop
+          echo "::set-output name=repo_name::$(echo ${{ github.repository }} | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')"
+          echo "::set-output name=repo_owner::$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ steps.extract_repo.outputs.repo_owner }}/${{ steps.extract_repo.outputs.repo_name }}:latest
+
+      - name: Log out from GitHub Container Registry
+        run: docker logout ghcr.io
+
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -35,143 +51,90 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
-            ssh-add ~/.ssh/${{ secrets.SSH_ID_RSA_NAME }}
-            if [ ! -d "/home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}" ]; then
-              mkdir /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
-              chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
-              git clone ${{ secrets.SSH_GITHUB_REPOSITORY }} /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
-            fi
-            cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}
-            git checkout staging
-            git pull origin staging
+            echo "${{ secrets.DOCKER_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            sudo docker pull ghcr.io/${{ steps.extract_repo.outputs.repo_owner }}/${{ steps.extract_repo.outputs.repo_name }}:latest
+            sudo docker stop ${{ steps.extract_repo.outputs.repo_name }} || true
+            sudo docker rm ${{ steps.extract_repo.outputs.repo_name }} || true
+            sudo docker run -d --name ${{ steps.extract_repo.outputs.repo_name }} \
+              --network host \
+              -e SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
+              -e PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}' \
+              -e STAGING_URL='${{ secrets.STAGING_URL }}' \
+              -e DATABASE_HOST='${{ secrets.DATABASE_HOST }}' \
+              -e DATABASE_NAME='${{ secrets.DATABASE_NAME }}' \
+              -e STAGE_DATABASE_NAME="${{ secrets.STAGE_DATABASE_NAME }}" \
+              -e SECRET_KEY_BASE="${{ secrets.SECRET_KEY_BASE }}123" \
+              -e DATABASE_USER="${{ secrets.DATABASE_USER}}" \
+              -e DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}" \
+              -e API_TOOLS_ACCESS_TOKEN="${{ secrets.API_TOOLS_ACCESS_TOKEN }}" \
+              -e ROOT_API_URL="${{ secrets.ROOT_API_URL }}" \
+              -e SMTP_DELIVERY_METHOD="smtp" \
+              -e SMTP_USER_NAME="${{ secrets.SMTP_USER_NAME }}" \
+              -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
+              -e SMTP_HOST="${{ secrets.SMTP_HOST }}" \
+              -e SMTP_PORT="${{ secrets.SMTP_PORT }}" \
+              -e BASE_FRONT_URL="${{ secrets.BASE_FRONT_URL }}" \
+              -e ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
+              -e ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
+              -e JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e GOOGLE_ENCODED_SECRET_FILE="${{ secrets.GOOGLE_ENCODED_SECRET_FILE }}" \
+              -e TELEGRAM_BOT='${{ secrets.TELEGRAM_BOT }}' \
+              -e DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}' \
+              -e DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}' \
+              -e REDIS_URL='redis://localhost:6379/11' \
+              -e ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable' \
+              -e LANG=C.UTF-8  \
+              -e RAILS_ENV=production \
+              -e RAILS_MIN_THREADS=1 \
+              -e RAILS_MAX_THREADS=10 \
+              -e WEB_CONCURRENCY=3 \
+              -e SIDEKIQ_CONCURRENCY=5 \
+              -e LC_CTYPE=en_US.UTF-8 \
+              -e LC_ALL=en_US.UTF-8 \
+              -e PORT=${{ secrets.PORT }} \
+              -e PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH" \
+              ghcr.io/${{ steps.extract_repo.outputs.repo_owner }}/${{ steps.extract_repo.outputs.repo_name }}:latest
+
+              rbenv global 3.0.2
+
+              rbenv -v
+              ruby -v
+              bundle -v
+
+              bundle config --global frozen false
+              bundle config set without 'development test'
+              bundle config set --local deployment 'true'
+              bundle install --without development test -j4 --retry 3
+
+              bundle exec rails db:migrate
+
+              # Restart or start the demo_broadcast_calendar_puma.service
+              sudo systemctl restart demo_broadcast_calendar_puma.service || sudo systemctl start demo_broadcast_calendar_puma.service
+
+              # Start Sidekiq
+              sudo systemctl restart demo_broadcast_calendar_sidekiq.service || sudo systemctl start demo_broadcast_calendar_sidekiq.service
+
+              # Run tests
+              export PATH="$PATH:/home/${{ secrets.SSH_USER }}/.pyenv/bin"
+
+              eval "$(pyenv init -)"
+
+              pyenv local 3.8.0
             
-            export SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
-            export PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
-            export STAGING_URL='${{ secrets.STAGING_URL }}'
-            export DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
-            export DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
-            export STAGE_DATABASE_NAME="${{ secrets.STAGE_DATABASE_NAME }}"
-            export SECRET_KEY_BASE="${{ secrets.SECRET_KEY_BASE }}123"
-            export DATABASE_USER="${{ secrets.DATABASE_USER}}"
-            export DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}"
-            export API_TOOLS_ACCESS_TOKEN="${{ secrets.API_TOOLS_ACCESS_TOKEN }}"
-            export ROOT_API_URL="${{ secrets.ROOT_API_URL }}"
-            
-            export SMTP_DELIVERY_METHOD="smtp"
-            export SMTP_USER_NAME="${{ secrets.SMTP_USER_NAME }}"
-            export SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}"
-            export SMTP_HOST="${{ secrets.SMTP_HOST }}"
-            export SMTP_PORT="${{ secrets.SMTP_PORT }}"
-            
-            export BASE_FRONT_URL="${{ secrets.BASE_FRONT_URL }}"
-            
-            export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"
-            export ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
-            
-            export JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+              # cd /home/${{ secrets.SSH_USER }}/autotests/Tests
+              # sleep 10
+              # env=STAGE /home/${{ secrets.SSH_USER }}/.pyenv/versions/3.8.0/bin/pytest test_endpoints_api.py --alluredir=/home/${{ secrets.SSH_USER }}/autotests/allure_results
 
-            export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-            export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
-            export GOOGLE_ENCODED_SECRET_FILE="${{ secrets.GOOGLE_ENCODED_SECRET_FILE }}"
+              # Restart Allure serve
+              # sudo systemctl restart broadcast_calendar_allure.service || sudo systemctl start broadcast_calendar_allure.service
 
-            export TELEGRAM_BOT='${{ secrets.TELEGRAM_BOT }}'
+              # Start Telegram poller
+              cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/
+              /home/${{ secrets.SSH_USER }}/.rbenv/shims/bundle exec ruby ./bin/telegram_bot_ctl restart
 
-            export DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}'
-            export DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}'
-
-            export REDIS_URL='redis://localhost:6379/11'
-            export ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable'
-            export LANG=C.UTF-8 
-            export RAILS_ENV=production
-            export RAILS_MIN_THREADS=1
-            export RAILS_MAX_THREADS=10
-            export WEB_CONCURRENCY=3
-            export SIDEKIQ_CONCURRENCY=5
-            export LC_CTYPE=en_US.UTF-8
-            export LC_ALL=en_US.UTF-8
-            export PORT=${{ secrets.PORT }}
-            export PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH"
-
-            echo "
-            SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
-            PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
-            STAGING_URL='${{ secrets.STAGING_URL }}'
-            DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
-            STAGE_DATABASE_NAME='${{ secrets.STAGE_DATABASE_NAME }}'
-            DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
-            SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}'
-            REDIS_URL='redis://localhost:6379/11'
-            ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable'
-            DATABASE_USER='${{ secrets.DATABASE_USER }}'
-            DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}'
-            API_TOOLS_ACCESS_TOKEN='${{ secrets.API_TOOLS_ACCESS_TOKEN }}'
-            SMTP_DELIVERY_METHOD='smtp'
-            SMTP_USER_NAME='${{ secrets.SMTP_USER_NAME }}'
-            SMTP_PASSWORD='${{ secrets.SMTP_PASSWORD }}'
-            SMTP_HOST='${{ secrets.SMTP_HOST }}'
-            SMTP_PORT='${{ secrets.SMTP_PORT }}'
-            BASE_FRONT_URL='${{ secrets.BASE_NEXT_FRONT_URL }}'
-            ADMIN_EMAIL='${{ secrets.ADMIN_EMAIL }}'
-            ADMIN_PASSWORD='${{ secrets.ADMIN_PASSWORD }}'
-            JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
-            ROOT_API_URL='${{ secrets.ROOT_API_URL }}'
-            GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID }}'
-            GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET }}'
-            GOOGLE_ENCODED_SECRET_FILE='${{ secrets.GOOGLE_ENCODED_SECRET_FILE }}'
-            TELEGRAM_TOKEN='${{ secrets.TELEGRAM_TOKEN }}'
-            DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}'
-            DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}'
-            LANG=C.UTF-8 
-            RAILS_ENV=production
-            RAILS_MIN_THREADS=1
-            RAILS_MAX_THREADS=10
-            WEB_CONCURRENCY=3
-            SIDEKIQ_CONCURRENCY=5
-            LC_CTYPE=en_US.UTF-8
-            LC_ALL=en_US.UTF-8
-            PORT=${{ secrets.PORT }}
-            PATH='/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:\$PATH\'
-            " > /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/.env
-            
-            rbenv global 3.0.2
-
-            rbenv -v
-            ruby -v
-            bundle -v
-
-            bundle config --global frozen false
-            bundle config set without 'development test'
-            bundle config set --local deployment 'true'
-            bundle install --without development test -j4 --retry 3
-
-            bundle exec rails db:migrate
-
-            # Restart or start the demo_broadcast_calendar_puma.service
-            sudo systemctl restart demo_broadcast_calendar_puma.service || sudo systemctl start demo_broadcast_calendar_puma.service
-
-            # Start Sidekiq
-            sudo systemctl restart demo_broadcast_calendar_sidekiq.service || sudo systemctl start demo_broadcast_calendar_sidekiq.service
-
-            # Run tests
-            export PATH="$PATH:/home/${{ secrets.SSH_USER }}/.pyenv/bin"
-
-            eval "$(pyenv init -)"
-
-            pyenv local 3.8.0
-            
-            # cd /home/${{ secrets.SSH_USER }}/autotests/Tests
-            # sleep 10
-            # env=STAGE /home/${{ secrets.SSH_USER }}/.pyenv/versions/3.8.0/bin/pytest test_endpoints_api.py --alluredir=/home/${{ secrets.SSH_USER }}/autotests/allure_results
-
-            # Restart Allure serve
-            # sudo systemctl restart broadcast_calendar_allure.service || sudo systemctl start broadcast_calendar_allure.service
-
-            # Start Telegram poller
-            cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/
-            /home/${{ secrets.SSH_USER }}/.rbenv/shims/bundle exec ruby ./bin/telegram_bot_ctl restart
-
-            # Start Discord Bot
-            cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/
-            RAILS_ENV=production /home/${{ secrets.SSH_USER }}/.rbenv/shims/bundle exec ruby ./bin/discord_bot_ctl restart
-
+              # Start Discord Bot
+              cd /home/${{ secrets.SSH_USER }}/${{ secrets.SERVER_APP_FOLDER }}/
+              RAILS_ENV=production /home/${{ secrets.SSH_USER }}/.rbenv/shims/bundle exec ruby ./bin/discord_bot_ctl restart
           EOF
