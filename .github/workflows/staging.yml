@@ -45,6 +45,8 @@ jobs:
             git checkout staging
             git pull origin staging
             
+            export PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
+            export STAGING_URL='${{ secrets.STAGING_URL }}'
             export DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
             export DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
             export STAGE_DATABASE_NAME="${{ secrets.STAGE_DATABASE_NAME }}"
@@ -90,6 +92,8 @@ jobs:
             export PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH"
 
             echo "
+            PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
+            STAGING_URL='${{ secrets.STAGING_URL }}'
             DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
             STAGE_DATABASE_NAME='${{ secrets.STAGE_DATABASE_NAME }}'
             DATABASE_NAME='${{ secrets.DATABASE_NAME }}'
