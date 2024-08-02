@@ -45,6 +45,7 @@ jobs:
             git checkout staging
             git pull origin staging
             
+            export SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
             export PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
             export STAGING_URL='${{ secrets.STAGING_URL }}'
             export DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
@@ -92,6 +93,7 @@ jobs:
             export PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH"
 
             echo "
+            SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
             PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
             STAGING_URL='${{ secrets.STAGING_URL }}'
             DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
