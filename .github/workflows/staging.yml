@@ -15,6 +15,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+
+      - name: Run linter
+        run: |
+          bundle exec rubocop
+
       - name: Extract repository name and owner, and convert to lowercase
         id: extract_repo
         run: |
