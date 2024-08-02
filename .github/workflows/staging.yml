@@ -57,7 +57,7 @@ jobs:
             sudo docker rm ${{ steps.extract_repo.outputs.repo_name }} || true
             sudo docker run -d --name ${{ steps.extract_repo.outputs.repo_name }} \
               --network host \
-              -e SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
+              -e SENTRY_DSN='${{ secrets.SENTRY_DSN }}' \
               -e PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}' \
               -e STAGING_URL='${{ secrets.STAGING_URL }}' \
               -e DATABASE_HOST='${{ secrets.DATABASE_HOST }}' \
