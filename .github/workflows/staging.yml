@@ -61,13 +61,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H '${{ secrets.SSH_HOST }}' >> ~/.ssh/known_hosts
 
-      - name: Create project folder
-        run: |
-          if [ ! -d "${{ env.SERVER_FOLDER_PATH }}" ]; then
-              sudo mkdir ${{ env.SERVER_FOLDER_PATH }}
-              sudo chown crmtools:crmtools ${{ env.SERVER_FOLDER_PATH }}
-          fi
-
       - name: Copy docker-compose.yml
         run: |
           scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ env.DOCKER_COMPOSE }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_FOLDER_PATH }}
@@ -75,6 +68,10 @@ jobs:
       - name: Create .env
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
+            if [ ! -d "${{ env.SERVER_FOLDER_PATH }}" ]; then
+              sudo mkdir ${{ env.SERVER_FOLDER_PATH }}
+              sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} ${{ env.SERVER_FOLDER_PATH }}
+            fi
             echo "
             REPO_OWNER='${{ env.REPO_OWNER }}'
             REPO_NAME='${{ env.REPO_NAME }}'
