@@ -65,7 +65,7 @@ jobs:
         run: |
           if [ ! -d "${{ env.SERVER_FOLDER_PATH }}" ]; then
               sudo mkdir ${{ env.SERVER_FOLDER_PATH }}
-              sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} ${{ env.SERVER_FOLDER_PATH }}
+              sudo chown crmtools:crmtools ${{ env.SERVER_FOLDER_PATH }}
           fi
 
       - name: Copy docker-compose.yml
