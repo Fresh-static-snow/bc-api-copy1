@@ -12,6 +12,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Set variables
+        id: vars
+        run: |
+          echo 'REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')' >> $GITHUB_ENV
+          echo 'REPO_OWNER=$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')' >> $GITHUB_ENV
+          echo 'SERVER_FOLDER=next-api-copy1' >> $GITHUB_ENV
+          echo 'SERVER_FOLDER_PATH=/home/${{ secrets.SSH_USER }}/${{ env.SERVER_FOLDER }}' >> $GITHUB_ENV
+          echo 'DOCKER_COMPOSE=docker-compose.staging.yml' >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -24,13 +33,7 @@ jobs:
       - name: Run linter
         run: |
           bundle exec rubocop
-
-      - name: Extract repository name and owner, and convert to lowercase
-        id: extract_repo
-        run: |
-          echo "::set-output name=repo_name::$(echo ${{ github.repository }} | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')"
-          echo "::set-output name=repo_owner::$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')"
-
+  
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -46,7 +49,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ steps.extract_repo.outputs.repo_owner }}/${{ steps.extract_repo.outputs.repo_name }}:latest
+          tags: ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
 
       - name: Log out from GitHub Container Registry
         run: docker logout ghcr.io
@@ -54,56 +57,75 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo '${{ secrets.SSH_PRIVATE_KEY }}' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H '${{ secrets.SSH_HOST }}' >> ~/.ssh/known_hosts
 
-      - name: Deploy to server
+      - name: Create project folder
+        run: |
+          if [ ! -d "${{ env.SERVER_FOLDER_PATH }}" ]; then
+              mkdir ${{ env.SERVER_FOLDER_PATH }}
+              chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} ${{ env.SERVER_FOLDER_PATH }}
+          fi
+
+      - name: Copy docker-compose.yml
+        run: |
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ env.DOCKER_COMPOSE }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_FOLDER_PATH }}
+
+      - name: Create .env
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
-            echo "${{ secrets.DOCKER_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            sudo docker pull ghcr.io/${{ steps.extract_repo.outputs.repo_owner }}/${{ steps.extract_repo.outputs.repo_name }}:latest
-            sudo docker stop ${{ steps.extract_repo.outputs.repo_name }} || true
-            sudo docker rm ${{ steps.extract_repo.outputs.repo_name }} || true
-            sudo docker run -d --name ${{ steps.extract_repo.outputs.repo_name }} \
-              --network host \
-              -e SENTRY_DSN='${{ secrets.SENTRY_DSN }}' \
-              -e PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}' \
-              -e STAGING_URL='${{ secrets.STAGING_URL }}' \
-              -e DATABASE_HOST='${{ secrets.DATABASE_HOST }}' \
-              -e DATABASE_NAME='${{ secrets.DATABASE_NAME }}' \
-              -e STAGE_DATABASE_NAME="${{ secrets.STAGE_DATABASE_NAME }}" \
-              -e SECRET_KEY_BASE="${{ secrets.SECRET_KEY_BASE }}123" \
-              -e DATABASE_USER="${{ secrets.DATABASE_USER}}" \
-              -e DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}" \
-              -e API_TOOLS_ACCESS_TOKEN="${{ secrets.API_TOOLS_ACCESS_TOKEN }}" \
-              -e ROOT_API_URL="${{ secrets.ROOT_API_URL }}" \
-              -e SMTP_DELIVERY_METHOD="smtp" \
-              -e SMTP_USER_NAME="${{ secrets.SMTP_USER_NAME }}" \
-              -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
-              -e SMTP_HOST="${{ secrets.SMTP_HOST }}" \
-              -e SMTP_PORT="${{ secrets.SMTP_PORT }}" \
-              -e BASE_FRONT_URL="${{ secrets.BASE_FRONT_URL }}" \
-              -e ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}" \
-              -e ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
-              -e JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" \
-              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-              -e GOOGLE_ENCODED_SECRET_FILE="${{ secrets.GOOGLE_ENCODED_SECRET_FILE }}" \
-              -e TELEGRAM_BOT='${{ secrets.TELEGRAM_BOT }}' \
-              -e DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}' \
-              -e DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}' \
-              -e REDIS_URL='redis://localhost:6379/11' \
-              -e ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable' \
-              -e LANG=C.UTF-8 \
-              -e RAILS_ENV=production \
-              -e RAILS_MIN_THREADS=1 \
-              -e RAILS_MAX_THREADS=10 \
-              -e WEB_CONCURRENCY=3 \
-              -e SIDEKIQ_CONCURRENCY=5 \
-              -e LC_CTYPE=en_US.UTF-8 \
-              -e LC_ALL=en_US.UTF-8 \
-              -e PORT=${{ secrets.PORT }} \
-              -e PATH="/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH" \
-              ghcr.io/${{ steps.extract_repo.outputs.repo_owner }}/${{ steps.extract_repo.outputs.repo_name }}:latest
+            echo "
+            REPO_OWNER='${{ env.REPO_OWNER }}'
+            REPO_NAME='${{ env.REPO_NAME }}'
+            SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
+            PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
+            STAGING_URL='${{ secrets.STAGING_URL }}'
+            DATABASE_HOST='${{ secrets.DATABASE_HOST }}'
+            DATABASE_NAME='${{ secrets.DATABASE_NAME }}' 
+            STAGE_DATABASE_NAME='${{ secrets.STAGE_DATABASE_NAME }}'
+            SECRET_KEY_BASE='${{ secrets.SECRET_KEY_BASE }}123' 
+            DATABASE_USER='${{ secrets.DATABASE_USER}}' 
+            DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' 
+            API_TOOLS_ACCESS_TOKEN='${{ secrets.API_TOOLS_ACCESS_TOKEN }}' 
+            ROOT_API_URL='${{ secrets.ROOT_API_URL }}' 
+            SMTP_DELIVERY_METHOD='smtp' 
+            SMTP_USER_NAME='${{ secrets.SMTP_USER_NAME }}' 
+            SMTP_PASSWORD='${{ secrets.SMTP_PASSWORD }}' 
+            SMTP_HOST='${{ secrets.SMTP_HOST }}' 
+            SMTP_PORT='${{ secrets.SMTP_PORT }}' 
+            BASE_FRONT_URL='${{ secrets.BASE_FRONT_URL }}' 
+            ADMIN_EMAIL='${{ secrets.ADMIN_EMAIL }}' 
+            ADMIN_PASSWORD='${{ secrets.ADMIN_PASSWORD }}' 
+            JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' 
+            GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID }}' 
+            GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET }}' 
+            GOOGLE_ENCODED_SECRET_FILE='${{ secrets.GOOGLE_ENCODED_SECRET_FILE }}' 
+            TELEGRAM_BOT='${{ secrets.TELEGRAM_BOT }}' 
+            DISCORD_TOKEN='${{ secrets.DISCORD_TOKEN }}'
+            DISCORD_CHANNEL_ID='${{ secrets.DISCORD_CHANNEL_ID }}'
+            REDIS_URL='redis://localhost:6379/11'
+            ACTION_CABLE_URL='ws://localhost:${{ secrets.PORT }}/cable'
+            LANG=C.UTF-8
+            RAILS_ENV=production
+            RAILS_MIN_THREADS=1
+            RAILS_MAX_THREADS=10
+            WEB_CONCURRENCY=3
+            SIDEKIQ_CONCURRENCY=5
+            LC_CTYPE=en_US.UTF-8
+            LC_ALL=en_US.UTF-8
+            PORT=${{ secrets.PORT }}
+            PATH='/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH'
+            " > ${{ env.SERVER_FOLDER_PATH }}/.env
+          EOF
+
+      - name: Pull and start docker
+        run: |
+          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
+            cd ${{ env.SERVER_FOLDER_PATH }}
+            echo '${{ secrets.DOCKER_TOKEN }}' | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+            sudo docker stop ${{ env.REPO_NAME }} || true
+            sudo docker rm ${{ env.REPO_NAME }} || true
+            sudo docker-compose -f ${{ env.DOCKER_COMPOSE }} up -d
           EOF
