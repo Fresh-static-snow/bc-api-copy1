@@ -15,11 +15,11 @@ jobs:
       - name: Set variables
         id: vars
         run: |
-          echo 'REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')' >> $GITHUB_ENV
-          echo 'REPO_OWNER=$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')' >> $GITHUB_ENV
-          echo 'SERVER_FOLDER=next-api-copy1' >> $GITHUB_ENV
-          echo 'SERVER_FOLDER_PATH=/home/${{ secrets.SSH_USER }}/${{ env.SERVER_FOLDER }}' >> $GITHUB_ENV
-          echo 'DOCKER_COMPOSE=docker-compose.staging.yml' >> $GITHUB_ENV
+          echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "REPO_OWNER=$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "SERVER_FOLDER=next-api-copy1" >> $GITHUB_ENV
+          echo "SERVER_FOLDER_PATH=/home/${{ secrets.SSH_USER }}/${{ env.SERVER_FOLDER }}" >> $GITHUB_ENV
+          echo "DOCKER_COMPOSE=docker-compose.staging.yml" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v3
