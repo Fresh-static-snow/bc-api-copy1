@@ -20,7 +20,3 @@ services:
     <<: *maincast-calendar-ruby
     container_name: maincast-calendar-sidekiq
     command: sidekiq
-
-volumes:
-  redis-data:
-
