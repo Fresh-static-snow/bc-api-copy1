@@ -128,5 +128,5 @@ jobs:
             sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
             sudo docker stop ${{ env.REPO_NAME }} || true
             sudo docker rm ${{ env.REPO_NAME }} || true
-            sudo docker-compose -f ${{ env.DOCKER_COMPOSE }} up -d
+            sudo docker compose -f ${{ env.DOCKER_COMPOSE }} up -d
           EOF
