@@ -1,6 +1,6 @@
 services:
   maincast-calendar-ruby: &maincast-calendar-ruby
-    image: ghcr.io/${REPO_OWNER}/${REPO_NAME}:latest
+    image: ghcr.io/${REPOSITORY_OWNER_LOWERCASE}/${REPOSITORY_NAME_LOWERCASE}:latest
     container_name: maincast-calendar-ruby
     restart: unless-stopped
     tty: true

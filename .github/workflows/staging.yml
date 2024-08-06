@@ -15,10 +15,10 @@ jobs:
       - name: Set variables
         id: vars
         run: |
-          echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-          echo "REPO_OWNER=$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-          echo "SERVER_FOLDER_PATH=/home/${{ secrets.SSH_USER }}/next-api-copy1" >> $GITHUB_ENV
-          echo "DOCKER_COMPOSE=docker-compose.staging.yml" >> $GITHUB_ENV
+          echo "repository_name_lowercase=$(echo ${{ github.repository }} | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "repository_owner_lowercase=$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "server_folder_path=/home/${{ secrets.SSH_USER }}/next-api-copy1" >> $GITHUB_ENV
+          echo "docker_compose_file=docker-compose.staging.yml" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+          tags: ghcr.io/${{ env.repository_owner_lowercase }}/${{ env.repository_name_lowercase }}:latest
 
       - name: Log out from GitHub Container Registry
         run: docker logout ghcr.io
@@ -63,22 +63,22 @@ jobs:
       - name: Create project folder
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
-            if [ ! -d "${{ env.SERVER_FOLDER_PATH }}" ]; then
-              sudo mkdir ${{ env.SERVER_FOLDER_PATH }}
-              sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} ${{ env.SERVER_FOLDER_PATH }}
+            if [ ! -d "${{ env.server_folder_path }}" ]; then
+              sudo mkdir ${{ env.server_folder_path }}
+              sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} ${{ env.server_folder_path }}
             fi
           EOF
 
       - name: Copy docker-compose.yml
         run: |
-          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ env.DOCKER_COMPOSE }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_FOLDER_PATH }}
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ env.docker_compose_file }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.server_folder_path }}
 
       - name: Create .env
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
             echo "
-            REPO_OWNER='${{ env.REPO_OWNER }}'
-            REPO_NAME='${{ env.REPO_NAME }}'
+            REPOSITORY_OWNER_LOWERCASE='${{ env.repository_owner_lowercase }}'
+            REPOSITORY_NAME_LOWERCASE='${{ env.repository_name_lowercase }}'
             SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
             PRODUCTION_URL='${{ secrets.PRODUCTION_URL }}'
             STAGING_URL='${{ secrets.STAGING_URL }}'
@@ -117,20 +117,20 @@ jobs:
             LC_ALL=en_US.UTF-8
             PORT=${{ secrets.PORT }}
             PATH='/home/${{ secrets.SSH_USER }}/.rbenv/bin:/home/${{ secrets.SSH_USER }}/.rbenv/shims:$PATH'
-            " > ${{ env.SERVER_FOLDER_PATH }}/.env
+            " > ${{ env.server_folder_path }}/.env
           EOF
 
-      - name: Pull and start docker
+      - name: Run Docker
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
-            cd ${{ env.SERVER_FOLDER_PATH }}
+            cd ${{ env.server_folder_path }}
             echo "${{ secrets.DOCKER_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+            sudo docker pull ghcr.io/${{ env.repository_owner_lowercase }}/${{ env.repository_name_lowercase }}:latest
             sudo docker stop maincast-calendar-ruby || true
             sudo docker stop maincast-calendar-api || true
             sudo docker stop maincast-calendar-sidekiq || true
             sudo docker rm maincast-calendar-ruby || true
             sudo docker rm maincast-calendar-api || true
             sudo docker rm maincast-calendar-sidekiq || true
-            sudo docker compose -f ${{ env.DOCKER_COMPOSE }} up -d
+            sudo docker compose -f ${{ env.docker_compose_file }} up -d
           EOF
