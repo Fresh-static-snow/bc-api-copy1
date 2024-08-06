@@ -19,9 +19,6 @@ jobs:
           echo "REPO_OWNER=$(echo ${{ github.repository }} | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
           echo "SERVER_FOLDER_PATH=/home/${{ secrets.SSH_USER }}/next-api-copy1" >> $GITHUB_ENV
           echo "DOCKER_COMPOSE=docker-compose.staging.yml" >> $GITHUB_ENV
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-          echo "COMMIT_HASH=${COMMIT_HASH}" >> $GITHUB_ENV
-          
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -80,7 +77,7 @@ jobs:
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
             echo "
-            COMMIT_HASH='${{ env.COMMIT_HASH }}'
+            COMMIT_HASH='${{ github.GITHUB_SHA }}'
             REPO_OWNER='${{ env.REPO_OWNER }}'
             REPO_NAME='${{ env.REPO_NAME }}'
             SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
@@ -130,11 +127,11 @@ jobs:
             cd ${{ env.SERVER_FOLDER_PATH }}
             echo "${{ secrets.DOCKER_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
-            sudo docker stop maincast-calendar-ruby-${{ env.COMMIT_HASH }} || true
-            sudo docker stop maincast-calendar-api-${{ env.COMMIT_HASH }} || true
-            sudo docker stop maincast-calendar-sidekiq-${{ env.COMMIT_HASH }} || true
-            sudo docker rm maincast-calendar-ruby-${{ env.COMMIT_HASH }} || true
-            sudo docker rm maincast-calendar-api-${{ env.COMMIT_HASH }} || true
-            sudo docker rm maincast-calendar-sidekiq-${{ env.COMMIT_HASH }} || true
+            sudo docker stop maincast-calendar-ruby-${{ github.GITHUB_SHA }} || true
+            sudo docker stop maincast-calendar-api-${{ github.GITHUB_SHA }} || true
+            sudo docker stop maincast-calendar-sidekiq-${{ github.GITHUB_SHA }} || true
+            sudo docker rm maincast-calendar-ruby-${{ github.GITHUB_SHA }} || true
+            sudo docker rm maincast-calendar-api-${{ github.GITHUB_SHA }} || true
+            sudo docker rm maincast-calendar-sidekiq-${{ github.GITHUB_SHA }} || true
             sudo docker compose -f ${{ env.DOCKER_COMPOSE }} up -d
           EOF
