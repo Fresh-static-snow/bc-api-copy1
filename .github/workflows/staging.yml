@@ -78,7 +78,6 @@ jobs:
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
             echo "
-            COMMIT_HASH='${{ env.COMMIT_HASH }}'
             REPO_OWNER='${{ env.REPO_OWNER }}'
             REPO_NAME='${{ env.REPO_NAME }}'
             SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
@@ -122,18 +121,17 @@ jobs:
             " > ${{ env.SERVER_FOLDER_PATH }}/.env
           EOF
 
-          - name: Pull and start docker
-          run: |
-            COMMIT_HASH=$(git rev-parse --short HEAD)
-            ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
-              cd ${{ env.SERVER_FOLDER_PATH }}
-              echo "${{ secrets.DOCKER_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
-              sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
-              sudo docker stop maincast-calendar-ruby-${COMMIT_HASH} || true
-              sudo docker stop maincast-calendar-api-${COMMIT_HASH} || true
-              sudo docker stop maincast-calendar-sidekiq-${COMMIT_HASH} || true
-              sudo docker rm maincast-calendar-ruby-${COMMIT_HASH} || true
-              sudo docker rm maincast-calendar-api-${COMMIT_HASH} || true
-              sudo docker rm maincast-calendar-sidekiq-${COMMIT_HASH} || true
-              sudo docker compose -f ${{ env.DOCKER_COMPOSE }} up -d
-            EOF
+      - name: Pull and start docker
+        run: |
+          ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
+            cd ${{ env.SERVER_FOLDER_PATH }}
+            echo "${{ secrets.DOCKER_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+            sudo docker stop maincast-calendar-ruby-${{ env.COMMIT_HASH }} || true
+            sudo docker stop maincast-calendar-api-${{ env.COMMIT_HASH }} || true
+            sudo docker stop maincast-calendar-sidekiq-${{ env.COMMIT_HASH }} || true
+            sudo docker rm maincast-calendar-ruby-${{ env.COMMIT_HASH }} || true
+            sudo docker rm maincast-calendar-api-${{ env.COMMIT_HASH }} || true
+            sudo docker rm maincast-calendar-sidekiq-${{ env.COMMIT_HASH }} || true
+            sudo docker compose -f ${{ env.DOCKER_COMPOSE }} up -d
+          EOF
