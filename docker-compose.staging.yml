@@ -1,7 +1,7 @@
 services:
   maincast-calendar-ruby: &maincast-calendar-ruby
     image: ghcr.io/${REPO_OWNER}/${REPO_NAME}:latest
-    container_name: maincast-calendar-ruby-${COMMIT_HASH}
+    container_name: maincast-calendar-ruby
     restart: unless-stopped
     tty: true
     stdin_open: true
@@ -11,10 +11,10 @@ services:
 
   maincast-calendar-api:
     <<: *maincast-calendar-ruby
-    container_name: maincast-calendar-api-${COMMIT_HASH}
+    container_name: maincast-calendar-api
     command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle exec rails s -p ${PORT} -b '0.0.0.0'"
 
   maincast-calendar-sidekiq:
     <<: *maincast-calendar-ruby
-    container_name: maincast-calendar-sidekiq-${COMMIT_HASH}
+    container_name: maincast-calendar-sidekiq
     command: sidekiq
