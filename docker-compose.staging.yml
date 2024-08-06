@@ -17,4 +17,4 @@ services:
   maincast-calendar-sidekiq:
     <<: *maincast-calendar-ruby
     container_name: maincast-calendar-sidekiq
-    command: sidekiq
+    command: bundle exec sidekiq
