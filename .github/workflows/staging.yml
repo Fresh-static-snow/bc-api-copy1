@@ -78,6 +78,7 @@ jobs:
         run: |
           ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<-EOF
             echo "
+            COMMIT_HASH='${{ env.COMMIT_HASH }}'
             REPO_OWNER='${{ env.REPO_OWNER }}'
             REPO_NAME='${{ env.REPO_NAME }}'
             SENTRY_DSN='${{ secrets.SENTRY_DSN }}'
