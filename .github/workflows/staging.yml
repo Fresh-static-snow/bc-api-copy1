@@ -141,5 +141,4 @@ jobs:
             sudo docker rm maincast-calendar-discord-bot || true
             sudo docker rm maincast-calendar-telegram-bot || true
             sudo docker compose -f ${{ env.docker_compose_file }} up -d
-            sudo docker exec -it maincast-calendar-ruby /bin/sh -c "bundle exec rails db:migrate"
           EOF

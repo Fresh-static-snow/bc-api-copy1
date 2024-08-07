@@ -8,6 +8,7 @@ services:
     env_file:
       - ./.env
     network_mode: host
+    command: /bin/sh -c "bundle exec rails db:migrate"
 
   maincast-calendar-api:
     <<: *maincast-calendar-ruby
