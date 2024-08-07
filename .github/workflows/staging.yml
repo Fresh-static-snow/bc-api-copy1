@@ -133,8 +133,12 @@ jobs:
             sudo docker stop maincast-calendar-ruby || true
             sudo docker stop maincast-calendar-api || true
             sudo docker stop maincast-calendar-sidekiq || true
+            sudo docker stop maincast-calendar-discord-bot || true
+            sudo docker stop maincast-calendar-telegram-bot || true
             sudo docker rm maincast-calendar-ruby || true
             sudo docker rm maincast-calendar-api || true
             sudo docker rm maincast-calendar-sidekiq || true
+            sudo docker rm maincast-calendar-discord-bot || true
+            sudo docker rm maincast-calendar-telegram-bot || true
             sudo docker compose -f ${{ env.docker_compose_file }} up -d
           EOF

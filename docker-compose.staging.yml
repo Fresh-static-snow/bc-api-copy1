@@ -18,3 +18,17 @@ services:
     <<: *maincast-calendar-ruby
     container_name: maincast-calendar-sidekiq
     command: bundle exec sidekiq
+
+  maincast-calendar-discord-bot:
+    <<: *maincast-calendar-ruby
+    container_name: maincast-calendar-discord-bot
+    env_file:
+      - ./.env
+    command: /bin/sh -c "bundle exec ruby ./bin/discord_bot_ctl restart"
+
+  maincast-calendar-telegram-bot:
+    <<: *maincast-calendar-ruby
+    container_name: maincast-calendar-telegram-bot
+    env_file:
+      - ./.env
+    command: /bin/sh -c "bundle exec ruby ./bin/telegram_bot_ctl restart"
